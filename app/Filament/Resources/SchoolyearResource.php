@@ -1,0 +1,297 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\SchoolyearResource\Pages;
+use App\Filament\Resources\SchoolyearResource\RelationManagers;
+use App\Models\Schoolyear;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Support\RawJs;
+use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+
+class SchoolyearResource extends Resource
+{
+    protected static ?string $model = Schoolyear::class;
+
+    protected static ?string $navigationIcon = 'heroicon-m-academic-cap';
+
+    protected static ?string $navigationLabel = 'Academic Years';
+
+    protected static ?string $navigationGroup = 'SCHOOL  Year Management';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Section::make()
+                    ->schema([
+                        TextInput::make('schoolyear')
+                            ->required()
+                            ->readOnly(),
+                        DatePicker::make('startDate')
+                            ->live()
+                            ->required()
+                            ->label('Select School Year Start Date')
+                            ->before('endDate')
+                            ->date()
+                            ->rules([
+                                function ($record) {
+                                    return function ($attribute, $value, $fail) use ($record) {
+                                        if (! $value) {
+                                            return;
+                                        }
+
+                                        $date = \Carbon\Carbon::parse($value);
+                                        $endDate = $record?->endDate;
+
+                                        $existingStart = Schoolyear::where('startDate', $date)
+                                            ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
+                                            ->first();
+
+                                        if ($existingStart) {
+                                            $fail("A school year already exists starting on this date ({$date->format('d/m/Y')})");
+
+                                            return;
+                                        }
+
+                                        $dateInBetween = Schoolyear::where(function ($query) use ($date) {
+                                            $query->where('startDate', '<=', $date)
+                                                ->where('endDate', '>=', $date);
+                                        })
+                                            ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
+                                            ->first();
+
+                                        if ($dateInBetween) {
+                                            $fail("This date falls within an existing school year ({$dateInBetween->startDate->format('d/m/Y')} - {$dateInBetween->endDate->format('d/m/Y')})");
+
+                                            return;
+                                        }
+
+                                        if ($endDate) {
+                                            $overlapping = Schoolyear::where(function ($query) use ($date, $endDate, $record) {
+                                                $query->where(function ($q) use ($date, $endDate) {
+                                                    $q->where(function ($subQ) use ($date, $endDate) {
+                                                        $subQ->where('startDate', '<=', $endDate)
+                                                            ->where('endDate', '>=', $date);
+                                                    });
+                                                });
+
+                                                if ($record) {
+                                                    $query->where('id', '!=', $record->id);
+                                                }
+                                            })->first();
+
+                                            if ($overlapping) {
+                                                $fail("This date range overlaps with an existing school year ({$overlapping->startDate->format('d/m/Y')} - {$overlapping->endDate->format('d/m/Y')})");
+                                            }
+                                        }
+                                    };
+                                },
+                            ])
+                            ->validationMessages([
+                                'required' => 'Start date is required',
+                                'date' => 'Please enter a valid date',
+                                'before' => 'Start date must be before end date',
+                            ])
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $endDate = $get('endDate');
+                                if ($state && $endDate) {
+                                    $startYear = \Carbon\Carbon::parse($state)->format('Y');
+                                    $endYear = \Carbon\Carbon::parse($endDate)->format('Y');
+                                    $set('schoolyear', "$startYear - $endYear");
+                                }
+                            }),
+
+                        DatePicker::make('endDate')
+                            ->live()
+                            ->required()
+                            ->label('Select School Year End Date')
+                            ->after('startDate')
+                            ->date()
+                            ->rules([
+                                function ($record) {
+                                    return function ($attribute, $value, $fail) use ($record) {
+                                        if (! $value) {
+                                            return;
+                                        }
+
+                                        $date = \Carbon\Carbon::parse($value);
+                                        $startDate = $record?->startDate ?? request()->input('schoolyears.startDate');
+
+                                        $existingEnd = Schoolyear::where('endDate', $date)
+                                            ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
+                                            ->first();
+
+                                        if ($existingEnd) {
+                                            $fail("A school year already exists ending on this date ({$date->format('d/m/Y')})");
+
+                                            return;
+                                        }
+
+                                        $dateInBetween = Schoolyear::where(function ($query) use ($date) {
+                                            $query->where('startDate', '<=', $date)
+                                                ->where('endDate', '>=', $date);
+                                        })
+                                            ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
+                                            ->first();
+
+                                        if ($dateInBetween) {
+                                            $fail("This date falls within an existing school year ({$dateInBetween->startDate->format('d/m/Y')} - {$dateInBetween->endDate->format('d/m/Y')})");
+
+                                            return;
+                                        }
+
+                                        if ($startDate) {
+                                            $startDate = \Carbon\Carbon::parse($startDate);
+
+                                            $overlapping = Schoolyear::where(function ($query) use ($startDate, $date, $record) {
+                                                $query->where(function ($q) use ($startDate, $date) {
+                                                    $q->where('startDate', '<=', $date)
+                                                        ->where('endDate', '>=', $startDate);
+                                                });
+
+                                                if ($record) {
+                                                    $query->where('id', '!=', $record->id);
+                                                }
+                                            })->first();
+
+                                            if ($overlapping) {
+                                                $fail("This date range overlaps with an existing school year ({$overlapping->startDate->format('d/m/Y')} - {$overlapping->endDate->format('d/m/Y')})");
+                                            }
+                                        }
+                                    };
+                                },
+                            ])
+                            ->validationMessages([
+                                'required' => 'End date is required',
+                                'date' => 'Please enter a valid date',
+                                'after' => 'End date must be after start date',
+                            ])
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $startDate = $get('startDate');
+                                if ($state && $startDate) {
+                                    $startYear = \Carbon\Carbon::parse($startDate)->format('Y');
+                                    $endYear = \Carbon\Carbon::parse($state)->format('Y');
+                                    $set('schoolyear', "$startYear - $endYear");
+                                }
+                            }),
+                        Select::make('status')
+                            ->required()
+                            ->options([
+                                'active' => 'Active',
+                                'inactive' => 'Inactive',
+                            ]),
+                    ]),
+                // Section::make('Semester Section')
+                //     ->icon('heroicon-m-academic-cap')
+                //     ->schema([
+                //         Repeater::make('semesters')
+                //             ->relationship()
+                //             ->schema([
+                //                 TextInput::make('semester')
+                //                     ->required()
+                //                     ->numeric()
+                //                     ->minValue(1)
+                //                     ->maxValue(2)
+                //                     ->distinct(),
+                //                 Repeater::make('collections')
+                //                     ->relationship()
+                //                     ->schema([
+                //                         TextInput::make('amount')
+                //                             ->mask(RawJs::make('$money($input)'))
+                //                             ->stripCharacters(',')
+                //                             ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/[^\d.]/g, "").replace(/(\..*?)\.+/g, "$1").replace(/\B(?=(\d{3})+(?!\d))/g, ",")'])
+                //                             ->numeric()
+                //                             ->prefixIcon('heroicon-m-peso-symbol')
+                //                             ->required(),
+                //                         TextInput::make('description')
+                //                             ->required()
+                //                             ->minLength(2)
+                //                             ->maxLength(60)
+                //                             ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/\\b\\w/g, char => char.toUpperCase())']),
+                //                     ])
+                //                     ->columns(2),
+                //             ])
+                //             ->columns(1),
+                //     ]),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('schoolyear')
+                    ->label('School Year')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('startDate')
+                    ->dateTime('d/m/Y')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('endDate')
+                    ->dateTime('d/m/Y')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('semesters.semester')
+                    ->badge(),
+                TextColumn::make('total_collection')
+                    ->label('Total Fees')
+                    ->money('PHP'),
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'inactive' => 'danger',
+                    }),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->options([
+                        'active' => 'Active',
+                        'inactive' => 'Inactive',
+                    ]),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\SemestersRelationManager::class,
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListSchoolyears::route('/'),
+            'create' => Pages\CreateSchoolyear::route('/create'),
+            'edit' => Pages\EditSchoolyear::route('/{record}/edit'),
+        ];
+    }
+}
