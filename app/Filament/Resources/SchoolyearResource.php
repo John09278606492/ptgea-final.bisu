@@ -22,11 +22,11 @@ class SchoolyearResource extends Resource
 {
     protected static ?string $model = Schoolyear::class;
 
-    protected static ?string $navigationIcon = 'heroicon-m-academic-cap';
+    protected static ?string $navigationIcon = 'heroicon-m-calendar-date-range';
 
     protected static ?string $navigationLabel = 'Academic Years';
 
-    protected static ?string $navigationGroup = 'SCHOOL  Year Management';
+    protected static ?string $navigationGroup = 'SCHOOL YEAR MANAGEMENT';
 
     public static function form(Form $form): Form
     {
