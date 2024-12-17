@@ -32,6 +32,11 @@ class Schoolyear extends Model
         return $this->hasMany(Semester::class);
     }
 
+    public function studentschoolyears(): HasMany
+    {
+        return $this->hasMany(Studentschoolyear::class, 'schoolyear_id');
+    }
+
     public function getTotalCollectionAttribute()
     {
         return $this->semesters->flatMap->collections->sum('amount');
