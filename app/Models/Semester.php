@@ -23,11 +23,16 @@ class Semester extends Model
 
     public function collections(): HasMany
     {
-        return $this->hasMany(Collection::class);
+        return $this->hasMany(Collection::class, 'semester_id');
     }
 
     public function getSemesterTotalCollectionAttribute()
     {
         return $this->collections->sum('amount');
+    }
+
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class, 'semester_id');
     }
 }

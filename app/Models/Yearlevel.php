@@ -43,4 +43,9 @@ class Yearlevel extends Model
             return '₱'.number_format($payment->amount, 2).' - '.$payment->description;
         })->toArray();
     }
+
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class, 'yearlevel_id');
+    }
 }
