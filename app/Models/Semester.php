@@ -26,11 +26,6 @@ class Semester extends Model
         return $this->hasMany(Collection::class);
     }
 
-    public function studentschoolyearsemesters(): HasMany
-    {
-        return $this->hasMany(Studentschoolyearsemester::class, 'semester_id');
-    }
-
     public function getSemesterTotalCollectionAttribute()
     {
         return $this->collections->sum('amount');
