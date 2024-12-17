@@ -28,6 +28,8 @@ class SchoolyearResource extends Resource
 
     protected static ?string $navigationGroup = 'SCHOOL YEAR MANAGEMENT';
 
+    protected static ?int $navigationSort = 2;
+
     public static function form(Form $form): Form
     {
         return $form
