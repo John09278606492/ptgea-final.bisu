@@ -30,9 +30,4 @@ class Semester extends Model
     {
         return $this->collections->sum('amount');
     }
-
-    public function students(): HasMany
-    {
-        return $this->hasMany(Student::class, 'semester_id');
-    }
 }

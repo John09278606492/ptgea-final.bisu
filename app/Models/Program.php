@@ -25,9 +25,4 @@ class Program extends Model
     {
         return $this->hasMany(Yearlevel::class, 'program_id');
     }
-
-    public function students(): HasMany
-    {
-        return $this->hasMany(Student::class, 'program_id');
-    }
 }
