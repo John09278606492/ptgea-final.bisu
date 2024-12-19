@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Yearlevelpayments extends Model
 {
@@ -22,5 +23,11 @@ class Yearlevelpayments extends Model
     public function yearlevel(): BelongsTo
     {
         return $this->belongsTo(Yearlevel::class, 'yearlevel_id');
+    }
+
+    public function scolleges(): BelongsToMany
+    {
+        return $this->belongsToMany(Scollege::class, 'yearlevelpayment_scollege', 'yearlevelpayment_id', 'scollege_id')
+            ->withTimestamps(); // Optional, if your pivot table has timestamps
     }
 }

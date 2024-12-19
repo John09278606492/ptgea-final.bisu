@@ -6,6 +6,7 @@ use App\Filament\Resources\SchoolyearResource\Pages;
 use App\Filament\Resources\SchoolyearResource\RelationManagers;
 use App\Models\Schoolyear;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -36,9 +37,13 @@ class SchoolyearResource extends Resource
             ->schema([
                 Section::make()
                     ->schema([
-                        TextInput::make('schoolyear')
-                            ->required()
-                            ->readOnly(),
+                        Grid::make()
+                            ->schema([
+                                TextInput::make('schoolyear')
+                                    ->required()
+                                    ->readOnly()
+                                    ->columnStart(1),
+                            ]),
                         DatePicker::make('startDate')
                             ->live()
                             ->required()

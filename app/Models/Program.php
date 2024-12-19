@@ -25,4 +25,9 @@ class Program extends Model
     {
         return $this->hasMany(Yearlevel::class, 'program_id');
     }
+
+    public function scolleges(): HasMany
+    {
+        return $this->hasMany(Scollege::class);
+    }
 }

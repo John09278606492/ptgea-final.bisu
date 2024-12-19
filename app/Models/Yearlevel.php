@@ -44,8 +44,8 @@ class Yearlevel extends Model
         })->toArray();
     }
 
-    public function students(): HasMany
+    public function scolleges(): HasMany
     {
-        return $this->hasMany(Student::class, 'yearlevel_id');
+        return $this->hasMany(Scollege::class);
     }
 }

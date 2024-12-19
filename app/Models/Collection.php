@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Collection extends Model
 {
@@ -19,5 +20,11 @@ class Collection extends Model
     public function semester(): BelongsTo
     {
         return $this->belongsTo(Semester::class.'semester_id');
+    }
+
+    public function syears(): BelongsToMany
+    {
+        return $this->belongsToMany(Syear::class, 'collection_syear', 'collection_id', 'syear_id')
+            ->withTimestamps();
     }
 }

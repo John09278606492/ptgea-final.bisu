@@ -55,7 +55,8 @@ class SemestersRelationManager extends RelationManager
                                     ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/\\b\\w/g, char => char.toUpperCase())']),
                             ])
                             ->columns(2),
-                    ]),
+                    ])
+                    ->columns(1),
             ]);
     }
 
