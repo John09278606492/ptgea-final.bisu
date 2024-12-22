@@ -283,7 +283,9 @@ class SchoolyearResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('No school year yet')
+            ->emptyStateDescription('Once you add school year, it will appear here.');
     }
 
     public static function getRelations(): array

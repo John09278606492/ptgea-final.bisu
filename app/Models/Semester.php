@@ -37,4 +37,10 @@ class Semester extends Model
         return $this->belongsToMany(Syear::class, 'semester_syear', 'semester_id', 'syear_id')
             ->withTimestamps(); // Optional, if your pivot table has timestamps
     }
+
+    public function enrollments(): BelongsToMany
+    {
+        return $this->belongsToMany(Enrollment::class)
+            ->withTimestamps();
+    }
 }

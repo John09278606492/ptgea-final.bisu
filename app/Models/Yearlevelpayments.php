@@ -30,4 +30,10 @@ class Yearlevelpayments extends Model
         return $this->belongsToMany(Scollege::class, 'yearlevelpayment_scollege', 'yearlevelpayment_id', 'scollege_id')
             ->withTimestamps(); // Optional, if your pivot table has timestamps
     }
+
+    public function enrollments(): BelongsToMany
+    {
+        return $this->belongsToMany(Enrollment::class)
+            ->withTimestamps();
+    }
 }

@@ -21,4 +21,14 @@ class EditStudent extends EditRecord
     {
         return $this->previousUrl ?? $this->getResource()::getUrl('index');
     }
+
+    public function getContentTabLabel(): ?string
+    {
+        return 'Student Information';
+    }
+
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
 }

@@ -37,4 +37,15 @@ class Syear extends Model
         return $this->belongsToMany(Collection::class, 'collection_syear', 'syear_id', 'collection_id')
             ->withTimestamps();
     }
+
+    public function getTotalAmountAttribute()
+    {
+        if ($this->collections->isEmpty()) {
+            return '₱0.00'; // Return a default value if no yearlevelpayments are associated
+        }
+
+        $totalAmount = $this->collections->sum('amount'); // Sum of all 'amount' in related yearlevelpayments
+
+        return '₱'.number_format($totalAmount, 2);
+    }
 }

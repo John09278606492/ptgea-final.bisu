@@ -30,4 +30,9 @@ class Program extends Model
     {
         return $this->hasMany(Scollege::class);
     }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
 }

@@ -19,12 +19,18 @@ class Collection extends Model
 
     public function semester(): BelongsTo
     {
-        return $this->belongsTo(Semester::class.'semester_id');
+        return $this->belongsTo(Semester::class);
     }
 
     public function syears(): BelongsToMany
     {
         return $this->belongsToMany(Syear::class, 'collection_syear', 'collection_id', 'syear_id')
+            ->withTimestamps();
+    }
+
+    public function enrollments(): BelongsToMany
+    {
+        return $this->belongsToMany(Enrollment::class)
             ->withTimestamps();
     }
 }
