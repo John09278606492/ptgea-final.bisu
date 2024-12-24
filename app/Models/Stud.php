@@ -22,4 +22,9 @@ class Stud extends Model
     {
         return $this->hasOne(Enrollment::class);
     }
+
+    public function getFullNameAttribute()
+    {
+        return $this->lastname.', '.$this->firstname.', '.$this->middlename;
+    }
 }

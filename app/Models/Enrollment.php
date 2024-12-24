@@ -64,9 +64,66 @@ class Enrollment extends Model
             ->withTimestamps();
     }
 
+    public function getFormattedCollectionsAttribute(): array
+    {
+        return $this->collections->map(function ($collection) {
+            return '₱'.number_format($collection->amount, 2).' - '.$collection->description;
+        })->toArray();
+    }
+
+    public function getFormattedYearlevelPaymentsAttribute(): array
+    {
+        return $this->yearlevelpayments->map(function ($payment) {
+            return '₱'.number_format($payment->amount, 2).' - '.$payment->description;
+        })->toArray();
+    }
+
+    public function getTotalPaymentsAttribute(): string
+    {
+        $collectionsTotal = $this->collections()->sum('amount');
+        $yearlevelPaymentsTotal = $this->yearlevelpayments()->sum('amount');
+
+        $total = $collectionsTotal + $yearlevelPaymentsTotal;
+
+        return '₱'.number_format($total, 2, '.', ',');
+    }
+
+    public function totalPaymentsAttribute(): string
+    {
+        $collectionsTotal = $this->collections()->sum('amount');
+        $yearlevelPaymentsTotal = $this->yearlevelpayments()->sum('amount');
+
+        $total = $collectionsTotal + $yearlevelPaymentsTotal;
+
+        return '₱'.number_format($total, 2, '.', ',');
+    }
+
+    public function getAmountWithDescriptionAttribute(): string
+    {
+        return '₱'.number_format($this->amount, 2, '.', ',').' - '.$this->description;
+    }
+
     public function pays(): HasMany
     {
         return $this->hasMany(Pay::class);
+    }
+
+    public function getTotalPaysAmountAttribute(): string
+    {
+        $totalAmount = $this->pays->sum('amount');
+
+        return '₱'.number_format($totalAmount, 2);
+    }
+
+    public function getBalanceAttribute(): string
+    {
+        $collectionsTotal = $this->collections()->sum('amount');
+        $yearlevelPaymentsTotal = $this->yearlevelpayments()->sum('amount');
+        $totalAmount = $this->pays->sum('amount');
+
+        $balance = ($collectionsTotal + $yearlevelPaymentsTotal) - $totalAmount;
+
+        return '₱'.number_format($balance, 2);
     }
 
     public static function summarizeAmounts()
