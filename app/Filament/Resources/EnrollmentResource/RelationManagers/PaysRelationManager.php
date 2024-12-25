@@ -5,6 +5,7 @@ namespace App\Filament\Resources\EnrollmentResource\RelationManagers;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -17,8 +18,12 @@ class PaysRelationManager extends RelationManager
         return $form
             ->schema([
                 Forms\Components\TextInput::make('amount')
-                    ->required()
-                    ->maxLength(255),
+                    ->mask(RawJs::make('$money($input)'))
+                    ->stripCharacters(',')
+                    ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/[^\d.]/g, "").replace(/(\..*?)\.+/g, "$1").replace(/\B(?=(\d{3})+(?!\d))/g, ",")'])
+                    ->numeric()
+                    ->prefixIcon('heroicon-m-peso-symbol')
+                    ->required(),
             ]);
     }
 

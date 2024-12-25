@@ -12,10 +12,10 @@ class TotalPayableWidget extends BaseWidget
     protected function getStats(): array
     {
         return [
-            // Stat::make('Total', Enrollment::totalPays())
-            //     ->description('Amount Paid')
-            //     ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
-            //     ->color('success'),
+            Stat::make('Total', Enrollment::summarizeAmounts())
+                ->description('Amount Paid')
+                ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
+                ->color('success'),
         ];
     }
 }

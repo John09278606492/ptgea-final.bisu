@@ -1,0 +1,208 @@
+<?php
+
+namespace App\Filament\Resources\StudResource\RelationManagers;
+
+use App\Models\Collection as ModelsCollection;
+use App\Models\College;
+use App\Models\Program;
+use App\Models\Schoolyear;
+use App\Models\Semester;
+use App\Models\Yearlevel;
+use App\Models\Yearlevelpayments;
+use Filament\Forms;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
+
+class EnrollmentsRelationManager extends RelationManager
+{
+    protected static string $relationship = 'enrollments';
+
+    protected static ?string $title = 'Academic Info';
+
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        $count = $ownerRecord->count();
+
+        return $count > 0 ? $count : null;
+    }
+
+    public function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Student Academic Information')
+                    ->schema([
+                        Forms\Components\Select::make('college_id')
+                            ->label('College')
+                            ->options(College::all()->pluck('college', 'id'))
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('program_id', null);
+                                $set('yearlevel_id', null);
+                                $set('yearlevelpayment_id', []);
+                            })
+                            ->searchable()
+                            ->required(),
+                        Forms\Components\Select::make('program_id')
+                            ->label('Program')
+                            ->options(fn (Get $get): Collection => Program::query()
+                                ->where('college_id', $get('college_id'))
+                                ->pluck('program', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('yearlevel_id', null);
+                                $set('yearlevelpayment_id', []);
+                            })
+                            ->required(),
+                        Forms\Components\Select::make('yearlevel_id')
+                            ->label('Year Level')
+                            ->options(fn (Get $get): Collection => Yearlevel::query()
+                                ->where('program_id', $get('program_id'))
+                                ->pluck('yearlevel', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->reactive()
+                            ->afterStateUpdated(fn (Set $set) => $set('yearlevelpayment_id', []))
+                            ->required(),
+                        Forms\Components\Grid::make()
+                            ->schema([
+                                CheckboxList::make('yearlevelpayment_id')
+                                    ->label('Year Level Fee Type')
+                                    ->inlineLabel()
+                                    ->relationship('yearlevelpayments', 'amount') // Define the relationship and the display column
+                                    ->options(fn (Get $get): array => Yearlevelpayments::query()
+                                        ->where('yearlevel_id', $get('yearlevel_id'))
+                                        ->get()
+                                        ->mapWithKeys(fn ($payment) => [
+                                            $payment->id => '₱'.number_format($payment->amount, 2), // Only amount here
+                                        ])
+                                        ->toArray())
+                                    ->descriptions(fn (Get $get): array => Yearlevelpayments::query()
+                                        ->where('yearlevel_id', $get('yearlevel_id'))
+                                        ->get()
+                                        ->mapWithKeys(fn ($payment) => [
+                                            $payment->id => new HtmlString(
+                                                $payment->description
+                                                    ? e($payment->description)
+                                                    : '<em>No description available.</em>' // Use italics for no description
+                                            ),
+                                        ])
+                                        ->toArray())
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Set $set) {
+                                        // Keep the current state as is without clearing other selections
+                                        if (! is_array($state)) {
+                                            $set('yearlevelpayments', []);
+                                        }
+                                    }),
+                            ]),
+                        Forms\Components\Grid::make()
+                            ->schema([
+                                Forms\Components\Select::make('schoolyear_id')
+                                    ->label('School Year')
+                                    ->options(Schoolyear::all()->pluck('schoolyear', 'id'))
+                                    ->preload()
+                                    ->searchable()
+                                    ->live()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, Set $set) {
+                                        $set('semester_id', []);
+                                        $set('collection_id', []);
+                                    })
+                                    ->required(),
+                            ])
+                            ->columnStart(1),
+                        Forms\Components\CheckboxList::make('semester_id')
+                            ->label('Semester')
+                            ->inlineLabel()
+                            ->relationship('semesters', 'semester')
+                            ->options(fn (Get $get): array => Semester::query()
+                                ->where('schoolyear_id', $get('schoolyear_id'))
+                                ->pluck('semester', 'id')
+                                ->toArray())
+                            ->live()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, Set $set) {
+                                $set('collection_id', []);
+                            })
+                            ->columns(2)
+                            ->gridDirection('row'),
+                        CheckboxList::make('collection_id')
+                            ->label('Semester Fee Type')
+                            ->inlineLabel()
+                            ->relationship('collections', 'amount') // Adjusted to match the relationship name and attribute in your model
+                            ->options(fn (Get $get): array => ModelsCollection::query()
+                                ->whereIn('semester_id', $get('semester_id'))
+                                ->get()
+                                ->mapWithKeys(fn ($collection) => [
+                                    $collection->id => '₱'.number_format($collection->amount, 2), // Only amount here
+                                ])
+                                ->toArray())
+                            ->descriptions(fn (Get $get): array => ModelsCollection::query()
+                                ->whereIn('semester_id', $get('semester_id'))
+                                ->with('semester') // Eager load the semester relationship
+                                ->get()
+                                ->mapWithKeys(fn ($collection) => [
+                                    $collection->id => new HtmlString(
+                                        ($collection->description
+                                            ? e($collection->description)
+                                            : '<em>No description available.</em>') // Payment description
+                                        .'<br>'
+                                        .'<small>Semester: '.e(optional($collection->semester)->semester ?? 'Unknown Semester').'</small>' // Add semester type
+                                    ),
+                                ])
+                                ->toArray())
+                            ->live()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, Set $set) {
+                                // Keep the current state as is without clearing other selections
+                                if (! is_array($state)) {
+                                    $set('collection_id', []);
+                                }
+                            })
+                            ->columns(2)
+                            ->gridDirection('row'),
+                    ])
+                    ->columns(2),
+            ]);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('schoolyear')
+            ->columns([
+                Tables\Columns\TextColumn::make('schoolyear.schoolyear'),
+                Tables\Columns\TextColumn::make('college.college'),
+                Tables\Columns\TextColumn::make('program.program'),
+                Tables\Columns\TextColumn::make('yearlevel.yearlevel'),
+            ])
+            ->filters([
+                //
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+}

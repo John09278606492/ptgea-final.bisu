@@ -6,6 +6,7 @@ use App\Filament\Resources\StudResource;
 use App\Filament\Resources\StudResource\Widgets\TotalWidget;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Contracts\Support\Htmlable;
 
 class ListStuds extends ListRecords
 {
@@ -14,8 +15,14 @@ class ListStuds extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Add student'),
         ];
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('Student Information');
     }
 
     protected function getRedirectUrl(): string
@@ -30,10 +37,10 @@ class ListStuds extends ListRecords
         ];
     }
 
-    public function getHeaderWidgets(): array
-    {
-        return [
-            TotalWidget::class,
-        ];
-    }
+    // public function getHeaderWidgets(): array
+    // {
+    //     return [
+    //         TotalWidget::class,
+    //     ];
+    // }
 }
