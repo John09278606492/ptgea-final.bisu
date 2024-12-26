@@ -121,7 +121,7 @@ class Enrollment extends Model
         $yearlevelPaymentsTotal = $this->yearlevelpayments()->sum('amount');
         $totalAmount = $this->pays->sum('amount');
 
-        if ($totalAmount == 0) {
+        if ($collectionsTotal == 0 && $yearlevelPaymentsTotal == 0) {
             return 'No Payments';
         }
 

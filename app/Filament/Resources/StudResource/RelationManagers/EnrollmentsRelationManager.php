@@ -17,22 +17,28 @@ use Filament\Forms\Set;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
+use Illuminate\Validation\Rules\Unique;
 
 class EnrollmentsRelationManager extends RelationManager
 {
+    use CanBeEmbeddedInModals;
+
     protected static string $relationship = 'enrollments';
 
     protected static ?string $title = 'Academic Info';
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
-        $count = $ownerRecord->count();
+        $count = $ownerRecord->enrollments()->count();
 
-        return $count > 0 ? $count : null;
+        return $count > 0 ? $count : 0;
     }
+
+    protected static ?string $badgeTooltip = 'Number of enrollment';
 
     public function form(Form $form): Form
     {
@@ -40,6 +46,9 @@ class EnrollmentsRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Section::make('Student Academic Information')
                     ->schema([
+                        Forms\Components\TextInput::make('stud_id')
+                            ->hidden()
+                            ->default(fn (RelationManager $livewire) => $livewire->ownerRecord->stud_id),
                         Forms\Components\Select::make('college_id')
                             ->label('College')
                             ->options(College::all()->pluck('college', 'id'))
@@ -76,38 +85,35 @@ class EnrollmentsRelationManager extends RelationManager
                             ->reactive()
                             ->afterStateUpdated(fn (Set $set) => $set('yearlevelpayment_id', []))
                             ->required(),
-                        Forms\Components\Grid::make()
-                            ->schema([
-                                CheckboxList::make('yearlevelpayment_id')
-                                    ->label('Year Level Fee Type')
-                                    ->inlineLabel()
-                                    ->relationship('yearlevelpayments', 'amount') // Define the relationship and the display column
-                                    ->options(fn (Get $get): array => Yearlevelpayments::query()
-                                        ->where('yearlevel_id', $get('yearlevel_id'))
-                                        ->get()
-                                        ->mapWithKeys(fn ($payment) => [
-                                            $payment->id => '₱'.number_format($payment->amount, 2), // Only amount here
-                                        ])
-                                        ->toArray())
-                                    ->descriptions(fn (Get $get): array => Yearlevelpayments::query()
-                                        ->where('yearlevel_id', $get('yearlevel_id'))
-                                        ->get()
-                                        ->mapWithKeys(fn ($payment) => [
-                                            $payment->id => new HtmlString(
-                                                $payment->description
-                                                    ? e($payment->description)
-                                                    : '<em>No description available.</em>' // Use italics for no description
-                                            ),
-                                        ])
-                                        ->toArray())
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Set $set) {
-                                        // Keep the current state as is without clearing other selections
-                                        if (! is_array($state)) {
-                                            $set('yearlevelpayments', []);
-                                        }
-                                    }),
-                            ]),
+                        CheckboxList::make('yearlevelpayment_id')
+                            ->label('Year Level Fee Type')
+                            ->inlineLabel()
+                            ->relationship('yearlevelpayments', 'amount') // Define the relationship and the display column
+                            ->options(fn (Get $get): array => Yearlevelpayments::query()
+                                ->where('yearlevel_id', $get('yearlevel_id'))
+                                ->get()
+                                ->mapWithKeys(fn ($payment) => [
+                                    $payment->id => '₱'.number_format($payment->amount, 2), // Only amount here
+                                ])
+                                ->toArray())
+                            ->descriptions(fn (Get $get): array => Yearlevelpayments::query()
+                                ->where('yearlevel_id', $get('yearlevel_id'))
+                                ->get()
+                                ->mapWithKeys(fn ($payment) => [
+                                    $payment->id => new HtmlString(
+                                        $payment->description
+                                            ? e($payment->description)
+                                            : '<em>No description available.</em>' // Use italics for no description
+                                    ),
+                                ])
+                                ->toArray())
+                            ->live()
+                            ->afterStateUpdated(function ($state, Set $set) {
+                                // Keep the current state as is without clearing other selections
+                                if (! is_array($state)) {
+                                    $set('yearlevelpayments', []);
+                                }
+                            }),
                         Forms\Components\Grid::make()
                             ->schema([
                                 Forms\Components\Select::make('schoolyear_id')
@@ -121,7 +127,26 @@ class EnrollmentsRelationManager extends RelationManager
                                         $set('semester_id', []);
                                         $set('collection_id', []);
                                     })
-                                    ->required(),
+                                    ->required()
+                                    ->unique(modifyRuleUsing: function (Unique $rule, callable $get) {
+                                        $studId = $get('stud_id');
+                                        $collegeId = $get('college_id');
+                                        $programId = $get('program_id');
+                                        $yearlevelId = $get('yearlevel_id');
+                                        $schoolyearId = $get('schoolyear_id');
+
+                                        return $rule
+                                            ->where('stud_id', $studId)
+                                            ->where('college_id', $collegeId)
+                                            ->where('program_id', $programId)
+                                            ->where('yearlevel_id', $yearlevelId)
+                                            ->where('schoolyear_id', $schoolyearId);
+                                    },
+                                        ignoreRecord: true,
+                                    )
+                                    ->validationMessages([
+                                        'unique' => 'Student already enrolled in this school year',
+                                    ]),
                             ])
                             ->columnStart(1),
                         Forms\Components\CheckboxList::make('semester_id')
@@ -203,6 +228,8 @@ class EnrollmentsRelationManager extends RelationManager
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('No enrollments yet')
+            ->emptyStateDescription('Once student is enrolled, it will appear here.');
     }
 }

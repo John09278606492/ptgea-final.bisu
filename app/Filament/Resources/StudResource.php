@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\StudResource\Pages;
 use App\Filament\Resources\StudResource\RelationManagers;
+use App\Filament\Resources\StudResource\RelationManagers\EnrollmentsRelationManager;
 use App\Models\Collection as ModelsCollection;
 use App\Models\College;
 use App\Models\Program;
@@ -22,6 +23,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 
@@ -43,6 +45,7 @@ class StudResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('studentidn')
                                     ->label('Student IDN')
+                                    ->unique(ignoreRecord: true)
                                     ->numeric()
                                     ->minValue(0)
                                     ->minLength(6)
@@ -300,6 +303,12 @@ class StudResource extends Resource
                     ->searchable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'active' => 'success',
+                        'inactive' => 'danger',
+                        'graduated' => 'gray',
+                    })
                     ->searchable()
                     ->searchable(),
                 // TextColumn::make('enrollments.collections.amount')
@@ -331,6 +340,13 @@ class StudResource extends Resource
                     ->preload(),
             ])
             ->actions([
+                RelationManagerAction::make('pays-relation-manager')
+                    ->label('Enroll')
+                    ->icon('heroicon-m-identification')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalHeading('')
+                    ->relationManager(EnrollmentsRelationManager::make()),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

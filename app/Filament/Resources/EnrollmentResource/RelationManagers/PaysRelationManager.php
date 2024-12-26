@@ -8,9 +8,12 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 
 class PaysRelationManager extends RelationManager
 {
+    use CanBeEmbeddedInModals;
+
     protected static string $relationship = 'pays';
 
     public function form(Form $form): Form
@@ -37,8 +40,7 @@ class PaysRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Date/Time Paid')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Date/Time Paid Updated')
                     ->dateTime()
@@ -65,6 +67,8 @@ class PaysRelationManager extends RelationManager
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->heading('Payment History');
+            ->heading('Payment history')
+            ->emptyStateHeading('No payments yet')
+            ->emptyStateDescription('Once student pays, it will appear here.');
     }
 }
