@@ -20,4 +20,11 @@ class Pay extends Model
     {
         return $this->belongsTo(Enrollment::class);
     }
+
+    public function generateReceipt()
+    {
+        return [
+            'amount' => $this->amount,
+        ];
+    }
 }

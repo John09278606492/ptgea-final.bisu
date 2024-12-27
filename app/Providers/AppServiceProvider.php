@@ -58,5 +58,6 @@ class AppServiceProvider extends ServiceProvider
                 ->columns()
                 ->compact();
         });
+
     }
 }
