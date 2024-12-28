@@ -9,9 +9,11 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 
 class YearlevelpaymentsRelationManager extends RelationManager
 {
+    use CanBeEmbeddedInModals;
     protected static string $relationship = 'yearlevelpayments';
 
     protected static ?string $title = 'Fee Types ';

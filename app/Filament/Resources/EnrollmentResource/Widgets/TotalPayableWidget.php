@@ -33,7 +33,7 @@ class TotalPayableWidget extends BaseWidget
                 return '₱'.number_format($totalAmount, 2, '.', ',');
             })
                 ->description('Expected Collections')
-                ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
+                ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
                 ->color('warning'),
             Stat::make('Total', function () {
                 $totalAmount = $this->getPageTableRecords()
@@ -46,7 +46,7 @@ class TotalPayableWidget extends BaseWidget
                 return '₱'.number_format($totalAmount, 2, '.', ',');
             })
                 ->description('Collected Amount')
-                ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
+                ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
                 ->color('success'),
             Stat::make('Total', function () {
                 $totalAmount = $this->getPageTableRecords()
@@ -64,7 +64,7 @@ class TotalPayableWidget extends BaseWidget
                 return '₱'.number_format($totalAmount, 2, '.', ',');
             })
                 ->description('Remaining Collections')
-                ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
+                ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
                 ->color('danger'),
             // Stat::make('Total', Enrollment::summarizeAmounts())
             //     ->description('Amount Paid')

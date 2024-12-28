@@ -27,4 +27,16 @@ class Stud extends Model
     {
         return $this->lastname.', '.$this->firstname.', '.$this->middlename;
     }
+
+    public static function countBySchoolYear(?int $schoolYearId): int
+    {
+        if (is_null($schoolYearId)) {
+            // Return the total count of students if no schoolyear_id is provided
+            return self::count();
+        }
+
+        return self::whereHas('enrollments', function ($query) use ($schoolYearId) {
+            $query->where('schoolyear_id', $schoolYearId);
+        })->count();
+    }
 }

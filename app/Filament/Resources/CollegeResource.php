@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CollegeResource\Pages;
 use App\Filament\Resources\CollegeResource\RelationManagers;
+use App\Filament\Resources\CollegeResource\RelationManagers\ProgramsRelationManager;
 use App\Models\College;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
@@ -14,6 +15,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 
 class CollegeResource extends Resource
 {
@@ -116,6 +118,13 @@ class CollegeResource extends Resource
                 //
             ])
             ->actions([
+                RelationManagerAction::make('programs-relation-manager')
+                    ->label('Add program')
+                    ->icon('heroicon-m-academic-cap')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalHeading('')
+                    ->relationManager(ProgramsRelationManager::make()),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

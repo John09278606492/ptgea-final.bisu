@@ -130,17 +130,60 @@ class Enrollment extends Model
         return '₱'.number_format($balance, 2);
     }
 
-    public static function summarizeAmounts()
+    public static function summarizeAmounts(?int $schoolYearId): string
     {
-        $total = self::with(['collections', 'yearlevelpayments'])
+        $total = self::when($schoolYearId, function ($query) use ($schoolYearId) {
+            return $query->where('schoolyear_id', $schoolYearId);
+        })
+            ->with(['collections', 'yearlevelpayments'])  // Eager load relationships
             ->get()
             ->sum(function ($enrollment) {
+                // Initialize totals
                 $collectionsTotal = $enrollment->collections->sum('amount');
                 $yearLevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
 
                 return $collectionsTotal + $yearLevelPaymentsTotal;
             });
 
-        return '₱'.number_format($total, 2);
+        // Format the result as currency
+        return '₱'.number_format($total, 2, '.', ',');
+    }
+
+    public static function summarizePaysAmount(?int $schoolYearId): string
+    {
+        $total = self::when($schoolYearId, function ($query) use ($schoolYearId) {
+            return $query->where('schoolyear_id', $schoolYearId);
+        })
+            ->with(['pays'])  // Eager load the pays relationship
+            ->get()
+            ->sum(function ($enrollment) {
+                // Sum the amounts in the `pays` relationship for each enrollment
+                return $enrollment->pays->sum('amount');
+            });
+
+        return '₱'.number_format($total, 2, '.', ',');
+    }
+
+    public static function summarizeBalance(?int $schoolYearId): string
+    {
+        $totalBalance = self::when($schoolYearId, function ($query) use ($schoolYearId) {
+            return $query->where('schoolyear_id', $schoolYearId);
+        })
+            ->with(['collections', 'yearlevelpayments', 'pays'])  // Eager load all related data
+            ->get()
+            ->sum(function ($enrollment) {
+                // Calculate the total for collections and yearlevelpayments
+                $collectionsTotal = $enrollment->collections->sum('amount');
+                $yearLevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
+                // Calculate the total of pays
+                $totalPays = $enrollment->pays->sum('amount');
+
+                // Calculate the balance: total collections + yearlevel payments - total pays
+                $balance = ($collectionsTotal + $yearLevelPaymentsTotal) - $totalPays;
+
+                return $balance;
+            });
+
+        return '₱'.number_format($totalBalance, 2, '.', ',');
     }
 }

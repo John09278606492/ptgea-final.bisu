@@ -39,7 +39,7 @@ class PaysRelationManager extends RelationManager
                                 // Retrieve the parent model through the relationship
                                 $parentModel = $this->getRelationship()->getParent();
 
-                                if (method_exists($parentModel, 'getBalanceAttribute')) {
+                                if (method_exists($parentModel, 'getBalanceAttribute')) {   
                                     $balance = $parentModel->getBalanceAttribute();
 
                                     // Convert balance to numeric for comparison
@@ -54,6 +54,9 @@ class PaysRelationManager extends RelationManager
                             };
                         },
                     ]),
+                Forms\Components\TextInput::make('status')
+                    ->readOnly()
+                    ->default('paid'),
             ]);
     }
 
@@ -64,6 +67,14 @@ class PaysRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('amount')
                     ->money('PHP'),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status')
+                    ->sortable()
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'paid' => 'success',
+                        'returned' => 'warning',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Date/Time Paid')
                     ->dateTime()

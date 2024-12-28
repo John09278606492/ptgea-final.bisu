@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProgramResource\Pages;
 use App\Filament\Resources\ProgramResource\RelationManagers;
+use App\Filament\Resources\ProgramResource\RelationManagers\YearlevelsRelationManager;
 use App\Models\College;
 use App\Models\Program;
 use Filament\Forms;
@@ -13,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 
 class ProgramResource extends Resource
 {
@@ -68,6 +70,13 @@ class ProgramResource extends Resource
                 //
             ])
             ->actions([
+                RelationManagerAction::make('yearlevels-relation-manager')
+                    ->label('Add year level')
+                    ->icon('heroicon-m-book-open')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalHeading('')
+                    ->relationManager(YearlevelsRelationManager::make()),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

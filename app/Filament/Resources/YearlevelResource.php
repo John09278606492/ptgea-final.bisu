@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\YearlevelResource\Pages;
 use App\Filament\Resources\YearlevelResource\RelationManagers;
+use App\Filament\Resources\YearlevelResource\RelationManagers\YearlevelpaymentsRelationManager;
 use App\Models\Program;
 use App\Models\Yearlevel;
 use Filament\Forms;
@@ -13,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use Illuminate\Validation\Rules\Unique;
 
 class YearlevelResource extends Resource
@@ -78,6 +80,13 @@ class YearlevelResource extends Resource
                 //
             ])
             ->actions([
+                RelationManagerAction::make('yearlevelpayments-relation-manager')
+                    ->label('Add fee type')
+                    ->icon('heroicon-m-banknotes')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalHeading('')
+                    ->relationManager(YearlevelpaymentsRelationManager::make()),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SchoolyearResource\Pages;
 use App\Filament\Resources\SchoolyearResource\RelationManagers;
+use App\Filament\Resources\SchoolyearResource\RelationManagers\SemestersRelationManager;
 use App\Models\Schoolyear;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -18,6 +19,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 
 class SchoolyearResource extends Resource
 {
@@ -277,6 +279,13 @@ class SchoolyearResource extends Resource
                     ]),
             ])
             ->actions([
+                RelationManagerAction::make('semesters-relation-manager')
+                    ->label('Add semester')
+                    ->icon('heroicon-m-academic-cap')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalHeading('')
+                    ->relationManager(SemestersRelationManager::make()),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

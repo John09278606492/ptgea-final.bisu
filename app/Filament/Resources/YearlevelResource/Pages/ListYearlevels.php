@@ -5,6 +5,7 @@ namespace App\Filament\Resources\YearlevelResource\Pages;
 use App\Filament\Resources\YearlevelResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Contracts\Support\Htmlable;
 
 class ListYearlevels extends ListRecords
 {
@@ -15,6 +16,11 @@ class ListYearlevels extends ListRecords
         return [
             Actions\CreateAction::make(),
         ];
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('Year Level');
     }
 
     protected function getRedirectUrl(): string
