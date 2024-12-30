@@ -5,6 +5,7 @@ namespace App\Filament\Resources\SchoolyearResource\Pages;
 use App\Filament\Resources\SchoolyearResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Contracts\Support\Htmlable;
 
 class EditSchoolyear extends EditRecord
 {
@@ -20,6 +21,11 @@ class EditSchoolyear extends EditRecord
     protected function getRedirectUrl(): string
     {
         return $this->previousUrl ?? $this->getResource()::getUrl('index');
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __(' Edit School Year');
     }
 
     public function getContentTabLabel(): ?string

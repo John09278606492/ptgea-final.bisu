@@ -23,7 +23,9 @@ class CollegeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationLabel = 'Colleges';
+    protected static ?string $navigationLabel = 'College';
+
+    protected static ?string $breadcrumb = 'College';
 
     protected static ?string $navigationGroup = 'COLLEGE MANAGEMENT';
 

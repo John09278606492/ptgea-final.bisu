@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Widgets\AdminWidget;
+use App\Filament\Widgets\CollegeWidget;
 use App\Filament\Widgets\ProgramWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -40,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
                 AdminWidget::class,
+                CollegeWidget::class,
                 ProgramWidget::class,
             ])
             ->middleware([

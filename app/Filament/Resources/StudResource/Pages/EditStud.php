@@ -25,21 +25,21 @@ class EditStud extends EditRecord
         return __('Edit student information');
     }
 
-    protected function getSaveFormAction(): Action
-    {
-        return Action::make('save')
-            ->label(__('Update'))
-            ->submit('save')
-            ->keyBindings(['mod+s']);
-    }
+    // protected function getSaveFormAction(): Action
+    // {
+    //     return Action::make('save')
+    //         ->label(__('Update'))
+    //         ->submit('save')
+    //         ->keyBindings(['mod+s']);
+    // }
 
-    protected function getCancelFormAction(): Action
-    {
-        return Action::make('cancel')
-            ->label(__('Close'))
-            ->alpineClickHandler('document.referrer ? window.history.back() : (window.location.href = '.Js::from($this->previousUrl ?? static::getResource()::getUrl()).')')
-            ->color('gray');
-    }
+    // protected function getCancelFormAction(): Action
+    // {
+    //     return Action::make('cancel')
+    //         ->label(__('Close'))
+    //         ->alpineClickHandler('document.referrer ? window.history.back() : (window.location.href = '.Js::from($this->previousUrl ?? static::getResource()::getUrl()).')')
+    //         ->color('gray');
+    // }
 
     protected function getRedirectUrl(): string
     {

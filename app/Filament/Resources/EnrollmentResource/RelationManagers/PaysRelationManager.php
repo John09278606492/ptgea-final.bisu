@@ -39,7 +39,7 @@ class PaysRelationManager extends RelationManager
                                 // Retrieve the parent model through the relationship
                                 $parentModel = $this->getRelationship()->getParent();
 
-                                if (method_exists($parentModel, 'getBalanceAttribute')) {   
+                                if (method_exists($parentModel, 'getBalanceAttribute')) {
                                     $balance = $parentModel->getBalanceAttribute();
 
                                     // Convert balance to numeric for comparison

@@ -23,6 +23,10 @@ class YearlevelResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationLabel = 'Year Level';
+
+    protected static ?string $breadcrumb = 'Year Level';
+
     protected static ?string $navigationGroup = 'COLLEGE MANAGEMENT';
 
     protected static ?int $navigationSort = 5;

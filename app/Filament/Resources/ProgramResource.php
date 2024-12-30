@@ -22,6 +22,8 @@ class ProgramResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 
+    protected static ?string $navigationLabel = 'Program';
+
     protected static ?string $navigationGroup = 'COLLEGE MANAGEMENT';
 
     protected static ?int $navigationSort = 4;

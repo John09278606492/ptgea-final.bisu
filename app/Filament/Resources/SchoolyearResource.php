@@ -27,9 +27,11 @@ class SchoolyearResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-m-calendar-date-range';
 
-    protected static ?string $navigationLabel = 'Academic Years';
+    protected static ?string $navigationLabel = 'School Year';
 
     protected static ?string $navigationGroup = 'SCHOOL YEAR MANAGEMENT';
+
+    protected static ?string $breadcrumb = 'School Year';
 
     protected static ?int $navigationSort = 2;
 

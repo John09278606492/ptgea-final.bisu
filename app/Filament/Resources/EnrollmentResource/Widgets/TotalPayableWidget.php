@@ -34,7 +34,7 @@ class TotalPayableWidget extends BaseWidget
             })
                 ->description('Expected Collections')
                 ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
-                ->color('warning'),
+                ->color('primary'),
             Stat::make('Total', function () {
                 $totalAmount = $this->getPageTableRecords()
                     ->sum(function ($enrollment) {

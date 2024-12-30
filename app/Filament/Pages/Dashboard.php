@@ -25,11 +25,14 @@ class Dashboard extends \Filament\Pages\Dashboard
                 Section::make()
                     ->schema([
                         Select::make('schoolyear_id')
+                            ->inlineLabel(false)
                             ->label('School Year')
+                            ->prefixIcon('heroicon-m-funnel')
                             ->selectablePlaceholder(false)
                             ->default($defaultSchoolYearId ?? 'All') // Use the found school year ID or default to 'All'
                             ->options(['All' => 'All'] + Schoolyear::all()->pluck('schoolyear', 'id')->toArray())
-                            ->nullable(), // Allow null value
+                            ->nullable()
+                            ->columnSpanFull(), // Allow null value
                     ]),
             ]);
     }

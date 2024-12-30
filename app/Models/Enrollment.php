@@ -186,4 +186,42 @@ class Enrollment extends Model
 
         return '₱'.number_format($totalBalance, 2, '.', ',');
     }
+
+    public static function countStudentsPerProgram(?int $schoolYearId): array
+    {
+        $enrollments = self::when($schoolYearId, function ($query) use ($schoolYearId) {
+            return $query->where('schoolyear_id', $schoolYearId);
+        })
+            ->with(['program']) // Eager load the program relationship
+            ->get();
+
+        // Group enrollments by program and count the students
+        $programCounts = $enrollments->groupBy(function ($enrollment) {
+            return $enrollment->program->name; // Group by program name
+        })->map(function ($group) {
+            return $group->count(); // Count students in each program
+        });
+
+        // Convert to array format
+        return $programCounts->toArray();
+    }
+
+    public static function countStudentsPerCollege(?int $schoolYearId): array
+    {
+        $enrollments = self::when($schoolYearId, function ($query) use ($schoolYearId) {
+            return $query->where('schoolyear_id', $schoolYearId);
+        })
+            ->with(['college']) // Eager load the program relationship
+            ->get();
+
+        // Group enrollments by program and count the students
+        $programCounts = $enrollments->groupBy(function ($enrollment) {
+            return $enrollment->college->name; // Group by program name
+        })->map(function ($group) {
+            return $group->count(); // Count students in each program
+        });
+
+        // Convert to array format
+        return $programCounts->toArray();
+    }
 }

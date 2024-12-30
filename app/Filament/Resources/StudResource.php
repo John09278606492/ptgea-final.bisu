@@ -19,6 +19,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -31,7 +32,9 @@ class StudResource extends Resource
 {
     protected static ?string $model = Stud::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+
+    protected static ?string $breadcrumb = 'Student Info';
 
     protected static ?string $navigationLabel = 'Student Info';
 
@@ -288,18 +291,22 @@ class StudResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('studentidn')
-                    ->searchable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('firstname')
-                    ->searchable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('middlename')
+                    ->label('Student IDN')
                     ->searchable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('lastname')
+                    ->weight(FontWeight::Bold)
+                    ->label('Last Name')
+                    ->searchable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('firstname')
+                    ->label('First Name')
+                    ->searchable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('middlename')
+                    ->label('Middle Name')
                     ->searchable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
