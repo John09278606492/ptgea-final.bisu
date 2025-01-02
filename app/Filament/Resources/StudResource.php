@@ -360,7 +360,9 @@ class StudResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('No students yet')
+            ->emptyStateDescription('Once you add students, it will appear here.');
     }
 
     public static function getRelations(): array

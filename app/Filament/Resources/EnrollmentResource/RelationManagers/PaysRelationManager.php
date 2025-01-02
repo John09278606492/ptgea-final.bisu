@@ -20,6 +20,8 @@ class PaysRelationManager extends RelationManager
 
     protected static string $relationship = 'pays';
 
+    protected static ?string $title = 'Payments';
+
     public function form(Form $form): Form
     {
         return $form

@@ -13,6 +13,8 @@ class Dashboard extends \Filament\Pages\Dashboard
 {
     use HasFiltersForm;
 
+    protected ?string $maxContentWidth = 'full';
+
     public function filtersForm(Form $form): Form
     {
         $today = Carbon::today(); // Get today's date

@@ -67,19 +67,6 @@ class CollegeWidget extends ChartWidget
                 ],
             ],
             'labels' => $labels, // All program names as labels
-            'options' => [
-                'scales' => [
-                    'y' => [
-                        'ticks' => [
-                            'beginAtZero' => true,  // Ensure the Y-axis starts at 0
-                            'stepSize' => 1,        // Set step size to 1 to prevent decimals
-                            'precision' => 0,       // Explicitly set   precision to 0 for integers
-                        ],
-                        'min' => 0,             // Explicitly set minimum Y value to 0
-                        'max' => max($data),    // Explicitly set maximum Y value to the max student count
-                    ],
-                ],
-            ],
         ];
     }
 

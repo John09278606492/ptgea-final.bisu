@@ -16,6 +16,8 @@ class ListEnrollments extends ListRecords
 
     protected static string $resource = EnrollmentResource::class;
 
+    protected ?string $maxContentWidth = 'full';
+
     protected function getHeaderActions(): array
     {
         return [

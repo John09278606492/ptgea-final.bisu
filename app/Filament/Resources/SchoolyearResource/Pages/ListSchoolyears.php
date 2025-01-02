@@ -11,6 +11,8 @@ class ListSchoolyears extends ListRecords
 {
     protected static string $resource = SchoolyearResource::class;
 
+    protected ?string $maxContentWidth = 'full';
+
     protected function getHeaderActions(): array
     {
         return [

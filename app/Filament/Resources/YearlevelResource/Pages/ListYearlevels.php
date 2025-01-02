@@ -11,11 +11,13 @@ class ListYearlevels extends ListRecords
 {
     protected static string $resource = YearlevelResource::class;
 
+    protected ?string $maxContentWidth = 'full';
+
     protected function getHeaderActions(): array
     {
         return [
             Actions\CreateAction::make()
-                ->label('New admin'),
+                ->label('New year level'),
         ];
     }
 
