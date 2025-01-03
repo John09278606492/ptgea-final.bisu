@@ -13,6 +13,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\Section as ComponentsSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Actions\CreateAction as ActionsCreateAction;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::before(function ($user) {
+            // This ensures that the user model is correctly loaded
+        });
         Action::configureUsing(function (Action $action) {
             if ($action->getName() === 'save') {
                 // Configure the "save" action

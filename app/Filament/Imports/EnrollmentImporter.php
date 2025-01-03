@@ -8,10 +8,10 @@ use App\Models\Program;
 use App\Models\Schoolyear;
 use App\Models\Stud;
 use App\Models\Yearlevel;
+use Filament\Actions\Imports\Exceptions\RowImportFailedException;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
-use Illuminate\Validation\Rule;
 
 class EnrollmentImporter extends Importer
 {
@@ -39,7 +39,7 @@ class EnrollmentImporter extends Importer
                         ->where('studentidn', $state)
                         ->first();
                 })
-                ->rules(['required']),
+                ->rules(['required', 'filled', 'present']),
             ImportColumn::make('college')
                 ->label('College')
                 ->exampleHeader('College')
@@ -64,10 +64,21 @@ class EnrollmentImporter extends Importer
                 ->label('Year Level')
                 ->exampleHeader('Year Level')
                 ->requiredMapping()
-                ->relationship(resolveUsing: function (string $state): ?Yearlevel {
-                    return Yearlevel::query()
-                        ->where('yearlevel', $state)
+                ->relationship(resolveUsing: function (string $state, array $data): ?Yearlevel {
+                    // Get the program from the data
+                    $program = Program::query()
+                        ->where('program', $data['program']) // Use the program from the import data
                         ->first();
+
+                    // If the program exists, find the yearlevel associated with it
+                    if ($program) {
+                        return Yearlevel::query()
+                            ->where('yearlevel', $state)
+                            ->where('program_id', $program->id) // Ensure the yearlevel is associated with the program
+                            ->first();
+                    }
+
+                    return null; // Return null if no program is found
                 })
                 ->rules(['required']),
             ImportColumn::make('schoolyear')
@@ -79,10 +90,7 @@ class EnrollmentImporter extends Importer
                         ->where('schoolyear', $state)
                         ->first();
                 })
-                ->rules([
-                    'required',
-                    // Rule::unique('schoolyear_id')->ignore($user->id),
-                ]),
+                ->rules(['required', 'filled', 'present']),
             ImportColumn::make('status')
                 ->label('Status')
                 ->exampleHeader('Status')
@@ -130,12 +138,14 @@ class EnrollmentImporter extends Importer
 
         $schoolyear = $this->schoolyears->firstWhere('schoolyear', $this->data['schoolyear']);
         if (! $schoolyear) {
-            throw new \Exception('School year not found: '.$this->data['schoolyear']);
+            // throw new \Exception('School year not found: '.$this->data['schoolyear']);
+            throw new RowImportFailedException('No school year found');
         }
 
         $student = $this->students->firstWhere('studentidn', $this->data['stud']);
         if (! $student) {
-            throw new \Exception('Student not found: '.$this->data['stud']);
+            // throw new \Exception('Student not found: '.$this->data['stud']);
+            throw new RowImportFailedException('No student idn found');
         }
 
         return Enrollment::firstOrNew(
@@ -144,6 +154,8 @@ class EnrollmentImporter extends Importer
                 'schoolyear_id' => $schoolyear->id,
             ]
         );
+
+        return new Enrollment;
     }
 
     public static function getCompletedNotificationBody(Import $import): string

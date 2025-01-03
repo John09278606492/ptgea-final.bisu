@@ -14,7 +14,7 @@ class StudImporter extends Importer
     public static function getColumns(): array
     {
         return [
-            ImportColumn::make('stud')
+            ImportColumn::make('studentidn')
                 ->label('Student IDN')
                 ->exampleHeader('Student IDN')
                 ->numeric()
@@ -61,13 +61,13 @@ class StudImporter extends Importer
     public function resolveRecord(): ?Stud
     {
         return Stud::firstOrNew([
-            'studentidn' => $this->data['stud'], // Match by a unique field
+            'studentidn' => $this->data['studentidn'],
         ]);
     }
 
     public static function getCompletedNotificationBody(Import $import): string
     {
-        $body = 'Your stud import has completed and '.number_format($import->successful_rows).' '.str('row')->plural($import->successful_rows).' imported.';
+        $body = 'Your student import has completed and '.number_format($import->successful_rows).' '.str('row')->plural($import->successful_rows).' imported.';
 
         if ($failedRowsCount = $import->getFailedRowsCount()) {
             $body .= ' '.number_format($failedRowsCount).' '.str('row')->plural($failedRowsCount).' failed to import.';

@@ -4,11 +4,10 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\Semester;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -25,10 +24,10 @@ class User extends Authenticatable
         'password',
     ];
 
-    public function schoolYear(): BelongsTo
-    {
-        return $this->belongsTo(Semester::class);
-    }
+    // public function schoolYear(): BelongsTo
+    // {
+    //     return $this->belongsTo(Semester::class);
+    // }
 
     /**
      * The attributes that should be hidden for serialization.
