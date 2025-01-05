@@ -1,48 +1,39 @@
 <?php
 
-namespace App\Filament\Resources\CollegeResource\RelationManagers;
+namespace App\Filament\Resources\StudResource\RelationManagers;
 
+use App\Models\Stud;
 use Filament\Forms;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
-use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 use stdClass;
 
-class ProgramsRelationManager extends RelationManager
+class SiblingRelationManager extends RelationManager
 {
-    use CanBeEmbeddedInModals;
-
-    protected static string $relationship = 'programs';
-
-    protected static ?string $title = 'Programs';
+    protected static string $relationship = 'siblings';
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make()
-                    ->schema([
-                        Forms\Components\TextInput::make('college_id')
-                            ->default(fn (RelationManager $livewire) => $livewire->ownerRecord->id)
-                            ->hidden(),
-                        Forms\Components\TextInput::make('program')
-                            ->required()
-                            ->maxLength(255)
-                            ->extraInputAttributes(['onInput' => 'this.value = this.value.toUpperCase()'])
-                            ->unique(ignoreRecord: true),
-                    ]),
+                Forms\Components\Select::make('sibling_id')
+                    ->label('Student')
+                    ->options(Stud::all()->pluck('firstname', 'id'))
+                    ->preload()
+                    ->searchable()
+                    ->required(),
             ]);
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('program')
+            ->recordTitleAttribute('sibling_id')
             ->columns([
                 TextColumn::make('#')->state(
                     static function (HasTable $livewire, stdClass $rowLoop): string {
@@ -54,14 +45,23 @@ class ProgramsRelationManager extends RelationManager
                         );
                     }
                 ),
-                Tables\Columns\TextColumn::make('program'),
+                Tables\Columns\TextColumn::make('stud.studentidn')
+                    ->label('Student IDN'),
+                Tables\Columns\TextColumn::make('stud.lastname')
+                    ->weight(FontWeight::Bold)
+                    ->label('Last Name'),
+                Tables\Columns\TextColumn::make('stud.firstname')
+                    ->label('First Name'),
+
+                Tables\Columns\TextColumn::make('stud.middlename')
+                    ->label('Middle Name'),
+
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->createAnother(false),
+                Tables\Actions\CreateAction::make(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -71,8 +71,6 @@ class ProgramsRelationManager extends RelationManager
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ])
-            ->emptyStateHeading('No programs yet')
-            ->emptyStateDescription('Once you add program, it will appear here.');
+            ]);
     }
 }

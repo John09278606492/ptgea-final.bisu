@@ -22,11 +22,13 @@ use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
+use stdClass;
 
 class StudResource extends Resource
 {
@@ -292,6 +294,16 @@ class StudResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('#')->state(
+                    static function (HasTable $livewire, stdClass $rowLoop): string {
+                        return (string) (
+                            $rowLoop->iteration +
+                            ($livewire->getTableRecordsPerPage() * (
+                                $livewire->getTablePage() - 1
+                            ))
+                        );
+                    }
+                ),
                 Tables\Columns\TextColumn::make('studentidn')
                     ->label('Student IDN')
                     ->searchable()
@@ -369,6 +381,7 @@ class StudResource extends Resource
     {
         return [
             RelationManagers\EnrollmentsRelationManager::class,
+            RelationManagers\SiblingRelationManager::class,
         ];
     }
 

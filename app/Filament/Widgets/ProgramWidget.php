@@ -14,6 +14,8 @@ class ProgramWidget extends ChartWidget
 
     use InteractsWithPageFilters;
 
+    // protected static bool $isLazy = false;
+
     protected static ?string $maxHeight = '275px';
 
     protected function getData(): array

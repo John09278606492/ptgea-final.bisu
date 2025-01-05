@@ -15,6 +15,7 @@ use App\Models\Yearlevel;
 use App\Models\Yearlevelpayments;
 use Filament\Forms;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
@@ -24,11 +25,16 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
+use stdClass;
 
 class EnrollmentResource extends Resource
 {
@@ -257,6 +263,16 @@ class EnrollmentResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('#')->state(
+                    static function (HasTable $livewire, stdClass $rowLoop): string {
+                        return (string) (
+                            $rowLoop->iteration +
+                            ($livewire->getTableRecordsPerPage() * (
+                                $livewire->getTablePage() - 1
+                            ))
+                        );
+                    }
+                ),
                 Tables\Columns\TextColumn::make('stud.studentidn')
                     ->label('Studen IDN')
                     ->searchable()
@@ -316,11 +332,93 @@ class EnrollmentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('schoolyear_id')
+                SelectFilter::make('schoolyear')
                     ->label('School Year')
                     ->relationship('schoolyear', 'schoolyear')
                     ->searchable()
                     ->preload(),
+                Filter::make('created_at')
+                    ->form([
+                        Select::make('college_id')
+                            ->label('College')
+                            ->placeholder('All')
+                            ->options(College::all()->pluck('college', 'id'))
+                            ->preload()
+                            ->reactive()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('program_id', null);
+                                $set('yearlevel_id', null);
+                            })
+                            ->searchable(),
+                        Select::make('program_id')
+                            ->label('Program')
+                            ->placeholder('All')
+                            ->options(fn (Get $get) => Program::query()
+                                ->where('college_id', $get('college_id'))
+                                ->pluck('program', 'id'))
+                            ->reactive()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('yearlevel_id', null);
+                            })
+                            ->preload()
+                            ->searchable(),
+                        Select::make('yearlevel_id')
+                            ->label('Year Level')
+                            ->placeholder('All')
+                            ->options(fn (Get $get) => Yearlevel::query()
+                                ->where('program_id', $get('program_id'))
+                                ->pluck('yearlevel', 'id'))
+                            ->reactive()
+                            ->preload()
+                            ->searchable(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['college_id'] ?? null,
+                                fn (Builder $query, $collegeId) => $query->where('college_id', $collegeId)
+                            )
+                            ->when(
+                                $data['program_id'] ?? null,
+                                fn (Builder $query, $programId) => $query->where('program_id', $programId)
+                            )
+                            ->when(
+                                $data['yearlevel_id'] ?? null,
+                                fn (Builder $query, $yearlevelId) => $query->where('yearlevel_id', $yearlevelId)
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if (! empty($data['college_id'])) {
+                            $indicators['college_id'] = 'College: '.College::find($data['college_id'])->college ?? 'N/A';
+                        }
+
+                        if (! empty($data['program_id'])) {
+                            $indicators['program_id'] = 'Program: '.Program::find($data['program_id'])->program ?? 'N/A';
+                        }
+
+                        if (! empty($data['yearlevel_id'])) {
+                            $indicators['yearlevel_id'] = 'Year Level: '.Yearlevel::find($data['yearlevel_id'])->yearlevel ?? 'N/A';
+                        }
+
+                        return $indicators;
+                    }),
+                // SelectFilter::make('college')
+                //     ->label('College')
+                //     ->relationship('college', 'college')
+                //     ->searchable()
+                //     ->preload(),
+                // SelectFilter::make('program')
+                //     ->label('Program')
+                //     ->relationship('program', 'program')
+                //     ->searchable()
+                //     ->preload(),
+                // SelectFilter::make('yearlevel')
+                //     ->label('Year Level')
+                //     ->relationship('yearlevel', 'yearlevel')
+                //     ->searchable()
+                //     ->preload(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()

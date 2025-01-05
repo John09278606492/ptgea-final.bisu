@@ -9,13 +9,13 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class TotalWidget extends BaseWidget
 {
-    protected function getStats(): array
-    {
-        return [
-            Stat::make('Total', Enrollment::summarizeAmounts())
-                ->description('Expected Collection Amount')
-                ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
-                ->color('success'),
-        ];
-    }
+    // protected function getStats(): array
+    // {
+    //     return [
+    //         Stat::make('Total', Enrollment::summarizeAmounts())
+    //             ->description('Expected Collection Amount')
+    //             ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
+    //             ->color('success'),
+    //     ];
+    // }
 }

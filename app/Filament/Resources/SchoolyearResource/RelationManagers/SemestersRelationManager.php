@@ -10,9 +10,12 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\RawJs;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 use Illuminate\Validation\Rules\Unique;
+use stdClass;
 
 class SemestersRelationManager extends RelationManager
 {
@@ -68,6 +71,16 @@ class SemestersRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('semester')
             ->columns([
+                TextColumn::make('#')->state(
+                    static function (HasTable $livewire, stdClass $rowLoop): string {
+                        return (string) (
+                            $rowLoop->iteration +
+                            ($livewire->getTableRecordsPerPage() * (
+                                $livewire->getTablePage() - 1
+                            ))
+                        );
+                    }
+                ),
                 Tables\Columns\TextColumn::make('semester')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('semester_total_collection')

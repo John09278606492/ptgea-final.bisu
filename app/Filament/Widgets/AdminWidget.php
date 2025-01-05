@@ -13,6 +13,10 @@ class AdminWidget extends BaseWidget
 {
     use InteractsWithPageFilters;
 
+    protected static bool $isLazy = false;
+
+    protected static ?string $pollingInterval = '1s';
+
     protected function getStats(): array
     {
         $schoolyearId = $this->filters['schoolyear_id'] ?? null;
@@ -22,15 +26,31 @@ class AdminWidget extends BaseWidget
             $schoolyearId = null;
         }
 
+        $this->cachedStats = null;
+
+        $studentCount = Enrollment::query()
+            ->when($schoolyearId, function ($query) use ($schoolyearId) {
+                return $query->where('schoolyear_id', $schoolyearId); // Filter by school year if provided
+            })
+            ->count();
+
         return [
-            Stat::make('Total', Stud::countBySchoolYear($schoolyearId))
+            Stat::make('Total', $studentCount)
                 ->description('No. of students')
                 ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
                 ->color('warning'),
+            Stat::make('Total', Stud::countFullyPaidStudents($schoolyearId))
+                ->description('No. of students fully paid')
+                ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
+                ->color('success'),
+            Stat::make('Total', Stud::countUnpaidStudents($schoolyearId))
+                ->description('No. of students not fully paid')
+                ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
+                ->color('danger'),
             Stat::make('Total', Enrollment::summarizeAmounts($schoolyearId))
                 ->description('Expected Collections')
                 ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
-                ->color('primary'),
+                ->color('warning'),
             Stat::make('Total', Enrollment::summarizePaysAmount($schoolyearId))
                 ->description('Collected Amounts')
                 ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)

@@ -2,16 +2,19 @@
 
 namespace App\Filament\Imports;
 
+use App\Models\Collection;
 use App\Models\College;
 use App\Models\Enrollment;
 use App\Models\Program;
 use App\Models\Schoolyear;
+use App\Models\Semester;
 use App\Models\Stud;
 use App\Models\Yearlevel;
 use Filament\Actions\Imports\Exceptions\RowImportFailedException;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentImporter extends Importer
 {
@@ -26,6 +29,10 @@ class EnrollmentImporter extends Importer
     private $yearlevels;
 
     private $schoolyears;
+
+    private $semesters;
+
+    private $collections;
 
     public static function getColumns(): array
     {
@@ -65,20 +72,17 @@ class EnrollmentImporter extends Importer
                 ->exampleHeader('Year Level')
                 ->requiredMapping()
                 ->relationship(resolveUsing: function (string $state, array $data): ?Yearlevel {
-                    // Get the program from the data
                     $program = Program::query()
-                        ->where('program', $data['program']) // Use the program from the import data
+                        ->where('program', $data['program'])
                         ->first();
-
-                    // If the program exists, find the yearlevel associated with it
                     if ($program) {
                         return Yearlevel::query()
                             ->where('yearlevel', $state)
-                            ->where('program_id', $program->id) // Ensure the yearlevel is associated with the program
+                            ->where('program_id', $program->id)
                             ->first();
                     }
 
-                    return null; // Return null if no program is found
+                    return null;
                 })
                 ->rules(['required']),
             ImportColumn::make('schoolyear')
@@ -107,6 +111,8 @@ class EnrollmentImporter extends Importer
             $this->programs = Program::select('id', 'college_id', 'program')->get();
             $this->yearlevels = Yearlevel::select('id', 'program_id', 'yearlevel')->get();
             $this->schoolyears = Schoolyear::select('id', 'schoolyear')->get();
+            $this->semesters = Semester::select('id', 'schoolyear_id', 'semester')->get();
+            $this->collections = Collection::select('id', 'semester_id', 'amount', 'description')->get();
         }
     }
 
@@ -117,7 +123,7 @@ class EnrollmentImporter extends Importer
         $college = $this->colleges->firstWhere('college', $this->data['college']);
         if (! $college) {
             $college = College::create(['college' => $this->data['college']]);
-            $this->colleges->push($college); // Update lookup cache
+            $this->colleges->push($college);
         }
 
         $program = $this->programs
@@ -125,7 +131,7 @@ class EnrollmentImporter extends Importer
             ->firstWhere('program', $this->data['program']);
         if (! $program) {
             $program = Program::create(['college_id' => $college->id, 'program' => $this->data['program']]);
-            $this->programs->push($program); // Update lookup cache
+            $this->programs->push($program);
         }
 
         $yearlevel = $this->yearlevels
@@ -133,29 +139,69 @@ class EnrollmentImporter extends Importer
             ->firstWhere('yearlevel', $this->data['yearlevel']);
         if (! $yearlevel) {
             $yearlevel = Yearlevel::create(['program_id' => $program->id, 'yearlevel' => $this->data['yearlevel']]);
-            $this->yearlevels->push($yearlevel); // Update lookup cache
+            $this->yearlevels->push($yearlevel);
         }
 
         $schoolyear = $this->schoolyears->firstWhere('schoolyear', $this->data['schoolyear']);
         if (! $schoolyear) {
-            // throw new \Exception('School year not found: '.$this->data['schoolyear']);
             throw new RowImportFailedException('No school year found');
         }
 
         $student = $this->students->firstWhere('studentidn', $this->data['stud']);
         if (! $student) {
-            // throw new \Exception('Student not found: '.$this->data['stud']);
             throw new RowImportFailedException('No student idn found');
         }
 
-        return Enrollment::firstOrNew(
+        $enrollment = Enrollment::firstOrNew(
             [
                 'stud_id' => $student->id,
                 'schoolyear_id' => $schoolyear->id,
+            ],
+            [
+                'college_id' => $college->id,
+                'program_id' => $program->id,
+                'yearlevel_id' => $yearlevel->id,
             ]
         );
 
-        return new Enrollment;
+        $enrollment->save();
+
+        $enrollmentId = $enrollment->id;
+
+        if ($schoolyear) {
+            $semester = $this->semesters->where('schoolyear_id', $schoolyear->id);
+            $existingEntry = DB::table('enrollment_semester')->where('enrollment_id', $enrollmentId)->exists();
+
+            if ($existingEntry) {
+                DB::table('enrollment_semester')->where('enrollment_id', $enrollmentId)->delete();
+            }
+
+            foreach ($semester as $semester1) {
+                DB::table('enrollment_semester')->insert([
+                    'enrollment_id' => $enrollmentId,
+                    'semester_id' => $semester1->id,
+                ]);
+
+            }
+
+            if ($semester) {
+                $existingEntry1 = DB::table('collection_enrollment')->where('enrollment_id', $enrollmentId)->exists();
+                if ($existingEntry1) {
+                    DB::table('collection_enrollment')->where('enrollment_id', $enrollmentId)->delete();
+                }
+                foreach ($semester as $semester1) {
+                    $collection = $this->collections->where('semester_id', $semester1->id);
+                    foreach ($collection as $collection1) {
+                        DB::table('collection_enrollment')->insert([
+                            'enrollment_id' => $enrollmentId,
+                            'collection_id' => $collection1->id,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $enrollment;
     }
 
     public static function getCompletedNotificationBody(Import $import): string

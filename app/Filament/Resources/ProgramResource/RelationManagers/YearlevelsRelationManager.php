@@ -7,9 +7,12 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 use Illuminate\Validation\Rules\Unique;
+use stdClass;
 
 class YearlevelsRelationManager extends RelationManager
 {
@@ -51,6 +54,16 @@ class YearlevelsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('yearlevel')
             ->columns([
+                TextColumn::make('#')->state(
+                    static function (HasTable $livewire, stdClass $rowLoop): string {
+                        return (string) (
+                            $rowLoop->iteration +
+                            ($livewire->getTableRecordsPerPage() * (
+                                $livewire->getTablePage() - 1
+                            ))
+                        );
+                    }
+                ),
                 Tables\Columns\TextColumn::make('yearlevel')
                     ->label('Year Level'),
             ])

@@ -15,6 +15,8 @@ class CollegeWidget extends ChartWidget
 
     use InteractsWithPageFilters;
 
+    // protected static bool $isLazy = false;
+
     protected static ?string $maxHeight = '275px';
 
     protected function getData(): array
@@ -66,12 +68,12 @@ class CollegeWidget extends ChartWidget
                     ],
                 ],
             ],
-            'labels' => $labels, // All program names as labels
+            'labels' => $labels,
         ];
     }
 
     protected function getType(): string
     {
-        return 'doughnut';
+        return 'bar';
     }
 }

@@ -9,10 +9,13 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\RawJs;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use stdClass;
 
 class PaysRelationManager extends RelationManager
 {
@@ -67,6 +70,16 @@ class PaysRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('amount')
             ->columns([
+                TextColumn::make('#')->state(
+                    static function (HasTable $livewire, stdClass $rowLoop): string {
+                        return (string) (
+                            $rowLoop->iteration +
+                            ($livewire->getTableRecordsPerPage() * (
+                                $livewire->getTablePage() - 1
+                            ))
+                        );
+                    }
+                ),
                 Tables\Columns\TextColumn::make('amount')
                     ->money('PHP'),
                 Tables\Columns\TextColumn::make('status')

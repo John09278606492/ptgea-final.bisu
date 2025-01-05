@@ -8,12 +8,16 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\RawJs;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
+use stdClass;
 
 class YearlevelpaymentsRelationManager extends RelationManager
 {
     use CanBeEmbeddedInModals;
+
     protected static string $relationship = 'yearlevelpayments';
 
     protected static ?string $title = 'Fee Types ';
@@ -48,6 +52,16 @@ class YearlevelpaymentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('amount')
             ->columns([
+                TextColumn::make('#')->state(
+                    static function (HasTable $livewire, stdClass $rowLoop): string {
+                        return (string) (
+                            $rowLoop->iteration +
+                            ($livewire->getTableRecordsPerPage() * (
+                                $livewire->getTablePage() - 1
+                            ))
+                        );
+                    }
+                ),
                 Tables\Columns\TextColumn::make('amount')
                     ->money('PHP'),
                 Tables\Columns\TextColumn::make('description'),

@@ -137,6 +137,7 @@ class Enrollment extends Model
         })
             ->with(['collections', 'yearlevelpayments'])  // Eager load relationships
             ->get()
+            ->fresh() // Ensures fresh data from the database
             ->sum(function ($enrollment) {
                 // Initialize totals
                 $collectionsTotal = $enrollment->collections->sum('amount');
@@ -156,6 +157,7 @@ class Enrollment extends Model
         })
             ->with(['pays'])  // Eager load the pays relationship
             ->get()
+            ->fresh() // Ensures fresh data from the database
             ->sum(function ($enrollment) {
                 // Sum the amounts in the `pays` relationship for each enrollment
                 return $enrollment->pays->sum('amount');
@@ -171,6 +173,7 @@ class Enrollment extends Model
         })
             ->with(['collections', 'yearlevelpayments', 'pays'])  // Eager load all related data
             ->get()
+            ->fresh() // Ensures fresh data from the database
             ->sum(function ($enrollment) {
                 // Calculate the total for collections and yearlevelpayments
                 $collectionsTotal = $enrollment->collections->sum('amount');
@@ -185,6 +188,18 @@ class Enrollment extends Model
             });
 
         return '₱'.number_format($totalBalance, 2, '.', ',');
+    }
+
+    public static function countBySchoolYear(?int $schoolYearId): int
+    {
+        if (! $schoolYearId) {
+            // Return the total count of students if no schoolyear_id is provided
+            return self::count();
+        }
+
+        return self::when($schoolYearId, function ($query) use ($schoolYearId) {
+            return $query->where('schoolyear_id', $schoolYearId);
+        })->count();
     }
 
     public static function countStudentsPerProgram(?int $schoolYearId): array

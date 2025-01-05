@@ -13,6 +13,8 @@ class TotalPayableWidget extends BaseWidget
 {
     use InteractsWithPageTable;
 
+    protected static bool $isLazy = false;
+
     protected function getTablePage(): string
     {
         return ListEnrollments::class;

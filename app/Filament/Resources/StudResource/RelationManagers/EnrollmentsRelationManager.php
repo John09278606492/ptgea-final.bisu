@@ -16,12 +16,15 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rules\Unique;
+use stdClass;
 
 class EnrollmentsRelationManager extends RelationManager
 {
@@ -209,6 +212,16 @@ class EnrollmentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('schoolyear')
             ->columns([
+                TextColumn::make('#')->state(
+                    static function (HasTable $livewire, stdClass $rowLoop): string {
+                        return (string) (
+                            $rowLoop->iteration +
+                            ($livewire->getTableRecordsPerPage() * (
+                                $livewire->getTablePage() - 1
+                            ))
+                        );
+                    }
+                ),
                 Tables\Columns\TextColumn::make('schoolyear.schoolyear'),
                 Tables\Columns\TextColumn::make('college.college'),
                 Tables\Columns\TextColumn::make('program.program'),
