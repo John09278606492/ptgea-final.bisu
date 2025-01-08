@@ -15,6 +15,8 @@ class TotalPayableWidget extends BaseWidget
 
     protected static bool $isLazy = false;
 
+    protected static ?string $pollingInterval = null;
+
     protected function getTablePage(): string
     {
         return ListEnrollments::class;
@@ -23,7 +25,7 @@ class TotalPayableWidget extends BaseWidget
     private function calculateExpectedCollections(): string
     {
         $totalAmount = $this->getPageTableQuery()
-            ->get() // Ensure the query executes and retrieves the data
+            ->get()
             ->sum(function ($enrollment) {
                 $collectionsTotal = $enrollment->collections->sum('amount');
                 $yearlevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
@@ -37,7 +39,7 @@ class TotalPayableWidget extends BaseWidget
     private function calculateCollectedAmounts(): string
     {
         $totalAmount = $this->getPageTableQuery()
-            ->get() // Ensure the query executes and retrieves the data
+            ->get()
             ->sum(function ($enrollment) {
                 $totalPayments = $enrollment->pays->sum('amount');
 
@@ -50,7 +52,7 @@ class TotalPayableWidget extends BaseWidget
     private function calculateRemainingCollections(): string
     {
         $totalAmount = $this->getPageTableQuery()
-            ->get() // Ensure the query executes and retrieves the data
+            ->get()
             ->sum(function ($enrollment) {
                 $collectionsTotal = $enrollment->collections->sum('amount');
                 $yearlevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');

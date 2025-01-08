@@ -22,7 +22,7 @@ class EditStud extends EditRecord
 
     public function getTitle(): string|Htmlable
     {
-        return __('Edit student information');
+        return __('Edit Student Information');
     }
 
     // protected function getSaveFormAction(): Action

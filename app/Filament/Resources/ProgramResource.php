@@ -10,6 +10,7 @@ use App\Models\Program;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -72,12 +73,15 @@ class ProgramResource extends Resource
                     ->sortable()
                     ->weight(FontWeight::Bold)
                     ->searchable(),
+                Tables\Columns\TextColumn::make('yearlevels.yearlevel')
+                    ->label('Year Levels')
+                    ->listWithLineBreaks(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime('M d, Y h:i a')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->dateTime('M d, Y h:i a')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -86,19 +90,34 @@ class ProgramResource extends Resource
             ])
             ->actions([
                 RelationManagerAction::make('yearlevels-relation-manager')
-                    ->label('Add year level')
+                    ->label('Add/View year level')
+                    ->color('success')
                     ->icon('heroicon-m-book-open')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
                     ->modalHeading('')
                     ->relationManager(YearlevelsRelationManager::make()),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->color('warning')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Program updated successfully!')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->color('success')
+                                ->icon('heroicon-o-check-circle')
+                                ->title('Programs deleted successfully!')),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('No records found');
     }
 
     public static function getRelations(): array

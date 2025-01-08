@@ -51,8 +51,7 @@ class SiblingRelationManager extends RelationManager
                     ->weight(FontWeight::Bold)
                     ->label('Last Name'),
                 Tables\Columns\TextColumn::make('stud.firstname')
-                    ->label('First Name'),
-
+                    ->label('First Name'),  
                 Tables\Columns\TextColumn::make('stud.middlename')
                     ->label('Middle Name'),
 

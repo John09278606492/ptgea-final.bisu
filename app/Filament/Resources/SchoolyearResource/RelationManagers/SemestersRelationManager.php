@@ -7,6 +7,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\RawJs;
 use Filament\Tables;
@@ -95,15 +96,39 @@ class SemestersRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->createAnother(false),
+                    ->createAnother(false)
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Semester added successfully!')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Semester updated successfully!')),
+                Tables\Actions\DeleteAction::make()
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Semester deleted successfully!')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->color('success')
+                                ->icon('heroicon-o-check-circle')
+                                ->title('Semesters deleted successfully!')),
                 ]),
             ])
             ->emptyStateHeading('No semesters yet')

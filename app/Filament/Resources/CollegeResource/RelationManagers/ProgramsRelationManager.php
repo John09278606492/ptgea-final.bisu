@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CollegeResource\RelationManagers;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -61,15 +62,39 @@ class ProgramsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->createAnother(false),
+                    ->createAnother(false)
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Program added successfully!')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Program updated successfully!')),
+                Tables\Actions\DeleteAction::make()
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Program deleted successfully!')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->color('success')
+                                ->icon('heroicon-o-check-circle')
+                                ->title('Programs deleted successfully!')),
                 ]),
             ])
             ->emptyStateHeading('No programs yet')

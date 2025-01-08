@@ -4,6 +4,7 @@ namespace App\Filament\Resources\SchoolyearResource\Pages;
 
 use App\Filament\Resources\SchoolyearResource;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -14,7 +15,13 @@ class EditSchoolyear extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+                ->successNotification(
+                    Notification::make()
+                        ->success()
+                        ->color('success')
+                        ->icon('heroicon-o-check-circle')
+                        ->title('School Year deleted successfully!')),
         ];
     }
 
@@ -25,7 +32,7 @@ class EditSchoolyear extends EditRecord
 
     public function getTitle(): string|Htmlable
     {
-        return __(' Edit School Year');
+        return __('Edit School Year');
     }
 
     public function getContentTabLabel(): ?string

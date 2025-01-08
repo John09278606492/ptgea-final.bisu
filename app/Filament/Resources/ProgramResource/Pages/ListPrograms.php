@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProgramResource\Pages;
 
 use App\Filament\Resources\ProgramResource;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPrograms extends ListRecords
@@ -15,7 +16,13 @@ class ListPrograms extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->successNotification(
+                    Notification::make()
+                        ->success()
+                        ->color('success')
+                        ->icon('heroicon-o-check-circle')
+                        ->title('Program added successfully!')),
         ];
     }
 

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\YearlevelResource\Pages;
 
 use App\Filament\Resources\YearlevelResource;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Contracts\Support\Htmlable;
 
 class CreateYearlevel extends CreateRecord
 {
@@ -15,4 +16,9 @@ class CreateYearlevel extends CreateRecord
     }
 
     protected static bool $canCreateAnother = false;
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('Create Year Level');
+    }
 }

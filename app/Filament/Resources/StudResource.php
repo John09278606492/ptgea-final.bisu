@@ -361,12 +361,14 @@ class StudResource extends Resource
             ->actions([
                 RelationManagerAction::make('pays-relation-manager')
                     ->label('Enroll')
+                    ->color('success')
                     ->icon('heroicon-m-identification')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
                     ->modalHeading('')
                     ->relationManager(EnrollmentsRelationManager::make()),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->color('warning'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

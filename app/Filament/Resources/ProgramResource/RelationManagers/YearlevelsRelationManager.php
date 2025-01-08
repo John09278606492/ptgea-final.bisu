@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ProgramResource\RelationManagers;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -73,10 +74,22 @@ class YearlevelsRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('New year level')
-                    ->createAnother(false),
+                    ->createAnother(false)
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Year Level added successfully!')),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Year Level updated successfully!')),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

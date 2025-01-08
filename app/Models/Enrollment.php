@@ -202,6 +202,40 @@ class Enrollment extends Model
         })->count();
     }
 
+    public static function countFullyPaidStudents(?int $schoolYearId): int
+    {
+        return self::when($schoolYearId, function ($query) use ($schoolYearId) {
+            return $query->where('schoolyear_id', $schoolYearId);
+        })
+            ->get()
+            ->filter(function ($enrollment) {
+                $collectionsTotal = $enrollment->collections->sum('amount');
+                $yearLevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
+                $totalPays = $enrollment->pays->sum('amount');
+
+                // Fully paid if total pays >= total required amount
+                return $totalPays >= ($collectionsTotal + $yearLevelPaymentsTotal);
+            })
+            ->count();
+    }
+
+    public static function countUnpaidStudents(?int $schoolYearId): int
+    {
+        return self::when($schoolYearId, function ($query) use ($schoolYearId) {
+            return $query->where('schoolyear_id', $schoolYearId);
+        })
+            ->get()
+            ->filter(function ($enrollment) {
+                $collectionsTotal = $enrollment->collections->sum('amount');
+                $yearLevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
+                $totalPays = $enrollment->pays->sum('amount');
+
+                // Unpaid if total pays < total required amount
+                return $totalPays < ($collectionsTotal + $yearLevelPaymentsTotal);
+            })
+            ->count();
+    }
+
     public static function countStudentsPerProgram(?int $schoolYearId): array
     {
         $enrollments = self::when($schoolYearId, function ($query) use ($schoolYearId) {

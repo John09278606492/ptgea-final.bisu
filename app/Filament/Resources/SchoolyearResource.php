@@ -13,6 +13,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\RawJs;
 use Filament\Tables;
@@ -294,21 +295,34 @@ class SchoolyearResource extends Resource
             ])
             ->actions([
                 RelationManagerAction::make('semesters-relation-manager')
-                    ->label('Add semester')
+                    ->label('Add/View semester')
                     ->icon('heroicon-m-academic-cap')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
                     ->modalHeading('')
+                    ->color('success')
                     ->relationManager(SemestersRelationManager::make()),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->color('warning')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('School Year udpated successfully!')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->color('success')
+                                ->icon('heroicon-o-check-circle')
+                                ->title('School Years deleted successfully!')),
                 ]),
             ])
-            ->emptyStateHeading('No school year yet')
-            ->emptyStateDescription('Once you add school year, it will appear here.');
+            ->emptyStateHeading('No records found');
     }
 
     public static function getRelations(): array

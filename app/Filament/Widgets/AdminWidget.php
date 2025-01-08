@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Enrollment;
-use App\Models\Stud;
 use Filament\Support\Enums\IconPosition;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -15,7 +14,7 @@ class AdminWidget extends BaseWidget
 
     protected static bool $isLazy = false;
 
-    protected static ?string $pollingInterval = '1s';
+    protected static ?string $pollingInterval = null;
 
     protected function getStats(): array
     {
@@ -39,11 +38,11 @@ class AdminWidget extends BaseWidget
                 ->description('No. of students')
                 ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
                 ->color('warning'),
-            Stat::make('Total', Stud::countFullyPaidStudents($schoolyearId))
+            Stat::make('Total', Enrollment::countFullyPaidStudents($schoolyearId))
                 ->description('No. of students fully paid')
                 ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
                 ->color('success'),
-            Stat::make('Total', Stud::countUnpaidStudents($schoolyearId))
+            Stat::make('Total', Enrollment::countUnpaidStudents($schoolyearId))
                 ->description('No. of students not fully paid')
                 ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
                 ->color('danger'),

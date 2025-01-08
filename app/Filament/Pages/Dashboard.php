@@ -17,10 +17,10 @@ class Dashboard extends \Filament\Pages\Dashboard
 
     public function filtersForm(Form $form): Form
     {
-        $today = Carbon::today(); // Get today's date
+        $today = Carbon::today();
         $defaultSchoolYearId = Schoolyear::where('startDate', '<=', $today)
             ->where('endDate', '>=', $today)
-            ->value('id'); // Get the school year ID where today falls between start and end dates
+            ->value('id');
 
         return $form
             ->schema([
@@ -31,10 +31,10 @@ class Dashboard extends \Filament\Pages\Dashboard
                             ->label('School Year')
                             ->prefixIcon('heroicon-m-funnel')
                             ->selectablePlaceholder(false)
-                            ->default($defaultSchoolYearId ?? 'All') // Use the found school year ID or default to 'All'
+                            ->default($defaultSchoolYearId ?? 'All')
                             ->options(['All' => 'All'] + Schoolyear::all()->pluck('schoolyear', 'id')->toArray())
                             ->nullable()
-                            ->columnSpanFull(), // Allow null value
+                            ->columnSpanFull(), 
                     ]),
             ]);
     }

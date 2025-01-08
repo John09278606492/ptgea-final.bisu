@@ -14,7 +14,6 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use stdClass;
 
 class PaysRelationManager extends RelationManager
@@ -92,11 +91,11 @@ class PaysRelationManager extends RelationManager
                     }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Date/Time Paid')
-                    ->dateTime()
+                    ->dateTime('M d, Y h:i a')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Date/Time Paid Updated')
-                    ->dateTime()
+                    ->dateTime('M d, Y h:i a')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -114,15 +113,10 @@ class PaysRelationManager extends RelationManager
                 Tables\Actions\Action::make('Generate Receipt')
                     ->icon('heroicon-o-document')
                     ->action(function (Pay $record) {
-                        // Folder path for saving the PDF
                         $folderPath = storage_path('app/public/temp_receipts');
-
-                        // Check if the folder exists, if not, create it
                         if (! File::exists($folderPath)) {
-                            File::makeDirectory($folderPath, 0777, true, true); // Create directory with permissions
+                            File::makeDirectory($folderPath, 0777, true, true);
                         }
-
-                        // Generate the receipt PDF
                         $pdf = Pdf::loadView('receipts.payment', [
                             'id' => $record->id,
                             'amount_formatted' => 'PHP '.number_format($record->amount, 2),
@@ -131,24 +125,14 @@ class PaysRelationManager extends RelationManager
                             'enrollment' => $record->enrollment->stud->only(['id', 'lastname', 'firstname', 'middlename']),
                         ])
                             ->setOption('encoding', 'UTF-8');
-
-                        // Save the PDF to a file
                         $pdfOutput = $pdf->output();
                         $filePath = $folderPath.'/receipt-'.$record->id.'.pdf';
                         file_put_contents($filePath, $pdfOutput);
-
-                        // Get the URL of the file for the print action
                         $publicFilePath = asset('storage/temp_receipts/receipt-'.$record->id.'.pdf');
-
-                        // Prepare JavaScript code as a single string
                         $jsCode = "
                         window.open('{$publicFilePath}', '_blank');
                     ";
 
-                        // Log the JavaScript code for debugging
-                        Log::info('JavaScript Code', ['code' => $jsCode]);
-
-                        // Return the JavaScript to be executed
                         return $this->js($jsCode);
                     }),
                 Tables\Actions\EditAction::make()

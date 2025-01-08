@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\InvoiceController;
 use App\Models\Pay;
 use Illuminate\Support\Facades\Route;
 
@@ -29,3 +30,6 @@ Route::get('/receipt/{pay}', function (Pay $pay) {
 
     return view('receipts.payment', $receiptData);
 })->name('generate-receipt');
+
+Route::get('/print-invoice/{id}', [InvoiceController::class, 'printInvoice'])
+    ->name('PRINT.INVOICE');

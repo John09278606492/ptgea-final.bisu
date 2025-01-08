@@ -10,6 +10,7 @@ use App\Models\Yearlevel;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -43,8 +44,11 @@ class YearlevelResource extends Resource
                         Forms\Components\Select::make('program_id')
                             ->label('Program')
                             ->options(Program::all()->pluck('program', 'id'))
+                            ->placeholder('Select a program')
+                            ->searchable()
                             ->required(),
                         Forms\Components\TextInput::make('yearlevel')
+                            ->label('Year Level')
                             ->required()
                             ->numeric()
                             ->minValue(1)
@@ -76,20 +80,27 @@ class YearlevelResource extends Resource
                     }
                 ),
                 Tables\Columns\TextColumn::make('program.program')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('yearlevel')
+                    ->label('Year Level')
                     ->weight(FontWeight::Bold)
+                    ->sortable()
                     ->searchable(),
-                // Tables\Columns\TextColumn::make('formatted_amount')
-                //     ->label('Total Collections')
-                //     ->money('PHP')
-                //     ->searchable(),
+                Tables\Columns\TextColumn::make('yearlevelpayments')
+                    ->label('Year Level Fee Types')
+                    ->formatStateUsing(function ($record) {
+                        return $record->yearlevelpayments
+                            ->map(fn ($payment) => '₱'.number_format($payment->amount, 2)." - {$payment->description}")
+                            ->join('<br>');
+                    })
+                    ->html(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime('M d, Y h:i a')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->dateTime('M d, Y h:i a')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -98,19 +109,34 @@ class YearlevelResource extends Resource
             ])
             ->actions([
                 RelationManagerAction::make('yearlevelpayments-relation-manager')
-                    ->label('Add fee type')
+                    ->label('Add/View fee type')
                     ->icon('heroicon-m-banknotes')
+                    ->color('success')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
                     ->modalHeading('')
                     ->relationManager(YearlevelpaymentsRelationManager::make()),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->color('warning')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('Year Level updated successfully!')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->color('success')
+                                ->icon('heroicon-o-check-circle')
+                                ->title('Year Levels deleted successfully!')),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('No records found');
     }
 
     public static function getRelations(): array

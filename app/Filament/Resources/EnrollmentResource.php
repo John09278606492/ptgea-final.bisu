@@ -13,6 +13,7 @@ use App\Models\Schoolyear;
 use App\Models\Semester;
 use App\Models\Yearlevel;
 use App\Models\Yearlevelpayments;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
@@ -261,6 +262,11 @@ class EnrollmentResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $today = Carbon::today();
+        $defaultSchoolYearId = Schoolyear::where('startDate', '<=', $today)
+            ->where('endDate', '>=', $today)
+            ->value('id');
+
         return $table
             ->columns([
                 TextColumn::make('#')->state(
@@ -335,6 +341,7 @@ class EnrollmentResource extends Resource
                 SelectFilter::make('schoolyear')
                     ->label('School Year')
                     ->relationship('schoolyear', 'schoolyear')
+                    ->default($defaultSchoolYearId ?? 'All')
                     ->searchable()
                     ->preload(),
                 Filter::make('created_at')
@@ -421,6 +428,8 @@ class EnrollmentResource extends Resource
                 //     ->preload(),
             ])
             ->actions([
+                Tables\Actions\Action::make('viewReceipt')
+                    ->url(fn ($record) => self::getUrl('invoice', ['record' => $record->id])),
                 Tables\Actions\ViewAction::make()
                     ->color('primary')
                     ->modalHeading('Student Academic Information'),
@@ -510,6 +519,7 @@ class EnrollmentResource extends Resource
             'index' => Pages\ListEnrollments::route('/'),
             'create' => Pages\CreateEnrollment::route('/create'),
             'edit' => Pages\EditEnrollment::route('/{record}/edit'),
+            'invoice' => Pages\Invoice::route('/{record}/invoice'),
         ];
     }
 }

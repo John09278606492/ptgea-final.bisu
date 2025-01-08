@@ -4,6 +4,7 @@ namespace App\Filament\Resources\YearlevelResource\Pages;
 
 use App\Filament\Resources\YearlevelResource;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -17,7 +18,13 @@ class ListYearlevels extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->label('New year level'),
+                ->label('New year level')
+                ->successNotification(
+                    Notification::make()
+                        ->success()
+                        ->color('success')
+                        ->icon('heroicon-o-check-circle')
+                        ->title('Year Level added successfully!')),
         ];
     }
 

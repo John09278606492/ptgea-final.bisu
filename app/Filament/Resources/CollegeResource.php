@@ -10,6 +10,7 @@ use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\RawJs;
@@ -120,6 +121,10 @@ class CollegeResource extends Resource
                     ->weight(FontWeight::Bold)
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('programs.program')
+                    ->listWithLineBreaks()
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -134,19 +139,34 @@ class CollegeResource extends Resource
             ])
             ->actions([
                 RelationManagerAction::make('programs-relation-manager')
-                    ->label('Add program')
+                    ->label('Add/View program')
                     ->icon('heroicon-m-academic-cap')
+                    ->color('success')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
                     ->modalHeading('')
                     ->relationManager(ProgramsRelationManager::make()),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->color('warning')
+                    ->successNotification(
+                        Notification::make()
+                            ->success()
+                            ->color('success')
+                            ->icon('heroicon-o-check-circle')
+                            ->title('College updated successfully!')),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->color('success')
+                                ->icon('heroicon-o-check-circle')
+                                ->title('Colleges deleted successfully!')),
                 ]),
-            ]);
+            ])
+            ->emptyStateHeading('No records found');
     }
 
     public static function getRelations(): array
