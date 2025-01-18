@@ -120,7 +120,10 @@ class EnrollmentImporter extends Importer
     {
         $this->loadLookups();
 
-        $college = $this->colleges->firstWhere('college', $this->data['college']);
+        $college = $this->colleges->firstWhere(function ($college) {
+            return strtolower($college->college) === strtolower($this->data['college']);
+        });
+
         if (! $college) {
             $college = College::create(['college' => $this->data['college']]);
             $this->colleges->push($college);
@@ -128,7 +131,9 @@ class EnrollmentImporter extends Importer
 
         $program = $this->programs
             ->where('college_id', $college->id)
-            ->firstWhere('program', $this->data['program']);
+            ->firstWhere(function ($program) {
+                return strtolower($program->program) === strtolower($this->data['program']);
+            });
         if (! $program) {
             $program = Program::create(['college_id' => $college->id, 'program' => $this->data['program']]);
             $this->programs->push($program);

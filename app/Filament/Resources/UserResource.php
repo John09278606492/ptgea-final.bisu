@@ -39,10 +39,24 @@ class UserResource extends Resource
                             ->email()
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\Select::make('role')
+                            ->options([
+                                'admin' => 'Admin',
+                                'guest' => 'Guest',
+                            ]),
+                        Forms\Components\TextInput::make('canId')
+                            ->label('Unique IDN (for students only)')
+                            ->unique(ignoreRecord: true)
+                            ->numeric()
+                            ->minValue(0)
+                            ->minLength(6)
+                            ->maxLength(15)
+                            ->maxLength(255),
                         Forms\Components\DateTimePicker::make('email_verified_at'),
                         Forms\Components\TextInput::make('password')
                             ->password()
                             ->required()
+                            ->revealable(true)
                             ->maxLength(255),
                     ]),
             ]);
@@ -65,6 +79,11 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('role')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('canId')
+                    ->label('Unique IDN (for students only)')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email_verified_at')
                     ->dateTime()

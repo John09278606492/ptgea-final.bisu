@@ -51,12 +51,13 @@ class EnrollmentsRelationManager extends RelationManager
                     ->schema([
                         Forms\Components\TextInput::make('stud_id')
                             ->hidden()
-                            ->default(fn (RelationManager $livewire) => $livewire->ownerRecord->stud_id),
+                            ->reactive()
+                            ->default(fn (RelationManager $livewire) => $livewire->ownerRecord->id),
                         Forms\Components\Select::make('college_id')
                             ->label('College')
                             ->options(College::all()->pluck('college', 'id'))
                             ->preload()
-                            ->live()
+                            ->reactive()
                             ->afterStateUpdated(function (Set $set) {
                                 $set('program_id', null);
                                 $set('yearlevel_id', null);
@@ -71,7 +72,7 @@ class EnrollmentsRelationManager extends RelationManager
                                 ->pluck('program', 'id'))
                             ->searchable()
                             ->preload()
-                            ->live()
+                            ->reactive()
                             ->afterStateUpdated(function (Set $set) {
                                 $set('yearlevel_id', null);
                                 $set('yearlevelpayment_id', []);
@@ -84,19 +85,18 @@ class EnrollmentsRelationManager extends RelationManager
                                 ->pluck('yearlevel', 'id'))
                             ->searchable()
                             ->preload()
-                            ->live()
                             ->reactive()
                             ->afterStateUpdated(fn (Set $set) => $set('yearlevelpayment_id', []))
                             ->required(),
                         CheckboxList::make('yearlevelpayment_id')
                             ->label('Year Level Fee Type')
                             ->inlineLabel()
-                            ->relationship('yearlevelpayments', 'amount') // Define the relationship and the display column
+                            ->relationship('yearlevelpayments', 'amount')
                             ->options(fn (Get $get): array => Yearlevelpayments::query()
                                 ->where('yearlevel_id', $get('yearlevel_id'))
                                 ->get()
                                 ->mapWithKeys(fn ($payment) => [
-                                    $payment->id => '₱'.number_format($payment->amount, 2), // Only amount here
+                                    $payment->id => '₱'.number_format($payment->amount, 2),
                                 ])
                                 ->toArray())
                             ->descriptions(fn (Get $get): array => Yearlevelpayments::query()
@@ -106,13 +106,12 @@ class EnrollmentsRelationManager extends RelationManager
                                     $payment->id => new HtmlString(
                                         $payment->description
                                             ? e($payment->description)
-                                            : '<em>No description available.</em>' // Use italics for no description
+                                            : '<em>No description available.</em>'
                                     ),
                                 ])
                                 ->toArray())
-                            ->live()
+                            ->reactive()
                             ->afterStateUpdated(function ($state, Set $set) {
-                                // Keep the current state as is without clearing other selections
                                 if (! is_array($state)) {
                                     $set('yearlevelpayments', []);
                                 }
@@ -124,7 +123,6 @@ class EnrollmentsRelationManager extends RelationManager
                                     ->options(Schoolyear::all()->pluck('schoolyear', 'id'))
                                     ->preload()
                                     ->searchable()
-                                    ->live()
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, Set $set) {
                                         $set('semester_id', []);
@@ -160,7 +158,6 @@ class EnrollmentsRelationManager extends RelationManager
                                 ->where('schoolyear_id', $get('schoolyear_id'))
                                 ->pluck('semester', 'id')
                                 ->toArray())
-                            ->live()
                             ->reactive()
                             ->afterStateUpdated(function ($state, Set $set) {
                                 $set('collection_id', []);
@@ -192,7 +189,6 @@ class EnrollmentsRelationManager extends RelationManager
                                     ),
                                 ])
                                 ->toArray())
-                            ->live()
                             ->reactive()
                             ->afterStateUpdated(function ($state, Set $set) {
                                 // Keep the current state as is without clearing other selections

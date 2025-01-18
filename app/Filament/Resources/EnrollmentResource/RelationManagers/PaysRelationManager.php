@@ -13,6 +13,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use stdClass;
 
@@ -107,7 +108,27 @@ class PaysRelationManager extends RelationManager
                     ->label('New payment')
                     ->modalHeading('Payment Form')
                     ->modalSubmitActionLabel('Pay')
-                    ->disableCreateAnother(),
+                    ->disableCreateAnother()
+                    ->after(function (Pay $record) {
+                        $parentModel = $record->enrollment;
+
+                        if ($parentModel) {
+                            $balance = $parentModel->getBalanceAttribute();
+
+                            $numericBalance = str_replace([',', '₱'], '', $balance);
+
+                            if ((float) $numericBalance <= 0) {
+                                DB::table('enrollments')
+                                    ->where('id', $this->getOwnerRecord()->id)
+                                    ->update(['status' => 'paid']);
+                                logger()->info('Payment is correct and balance is zero or below.');
+                            } else {
+                                logger()->info("Remaining balance: {$numericBalance}");
+                            }
+                        } else {
+                            logger()->error('No related enrollment found for payment record.');
+                        }
+                    }),
             ])
             ->actions([
                 Tables\Actions\Action::make('Generate Receipt')
@@ -147,5 +168,30 @@ class PaysRelationManager extends RelationManager
             ->heading('Payment history')
             ->emptyStateHeading('No payments yet')
             ->emptyStateDescription('Once student pays, it will appear here.');
+        // ->save(function (Forms\ComponentContainer $form, Pay $record) {
+        //     $enrollment = $record->enrollment;
+
+        //     if ($enrollment && $enrollment->getBalanceAttribute() <= 0) {
+        //         $enrollment->update(['status' => 'paid']);
+        //     }
+        // });
+    }
+
+    protected function afterSave(): void
+    {
+        $enrollment = $this->getOwnerRecord(); // Retrieve the parent Enrollment
+
+        if ($enrollment) {
+            $balance = $enrollment->getBalanceAttribute();
+
+            if ($balance <= 0) {
+                logger()->info('Should Update');
+                $enrollment->update(['status' => 'paid']);
+            } else {
+                logger()->info("Balance is not zero or below: {$balance}");
+            }
+        } else {
+            logger()->error('No related enrollment found for payment record.');
+        }
     }
 }

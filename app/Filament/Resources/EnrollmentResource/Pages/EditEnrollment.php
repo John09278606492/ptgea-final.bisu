@@ -19,7 +19,12 @@ class EditEnrollment extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Action::make('return')
+                ->color('primary')
+                ->icon('heroicon-m-arrow-left-circle')
+                ->label('Go back')
+                ->url(fn () => static::getResource()::getUrl('index')),
+            // Actions\DeleteAction::make(),
         ];
     }
 

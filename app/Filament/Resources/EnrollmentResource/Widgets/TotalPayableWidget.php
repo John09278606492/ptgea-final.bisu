@@ -8,6 +8,7 @@ use Filament\Support\Enums\IconPosition;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\DB;
 
 class TotalPayableWidget extends BaseWidget
 {
@@ -25,6 +26,8 @@ class TotalPayableWidget extends BaseWidget
     private function calculateExpectedCollections(): string
     {
         $totalAmount = $this->getPageTableQuery()
+            ->with(['collections', 'yearlevelpayments']) // Eager load related models
+            ->select('enrollments.id') // Fetch only necessary columns
             ->get()
             ->sum(function ($enrollment) {
                 $collectionsTotal = $enrollment->collections->sum('amount');
@@ -39,11 +42,11 @@ class TotalPayableWidget extends BaseWidget
     private function calculateCollectedAmounts(): string
     {
         $totalAmount = $this->getPageTableQuery()
+            ->with('pays') // Eager load the pays relationship
+            ->select('enrollments.id') // Fetch only necessary columns
             ->get()
             ->sum(function ($enrollment) {
-                $totalPayments = $enrollment->pays->sum('amount');
-
-                return $totalPayments;
+                return $enrollment->pays->sum('amount');
             });
 
         return '₱'.number_format($totalAmount, 2, '.', ',');
@@ -52,6 +55,8 @@ class TotalPayableWidget extends BaseWidget
     private function calculateRemainingCollections(): string
     {
         $totalAmount = $this->getPageTableQuery()
+            ->with(['collections', 'yearlevelpayments', 'pays']) // Eager load all related models
+            ->select('enrollments.id') // Fetch only necessary columns
             ->get()
             ->sum(function ($enrollment) {
                 $collectionsTotal = $enrollment->collections->sum('amount');
@@ -59,13 +64,68 @@ class TotalPayableWidget extends BaseWidget
                 $totalPayments = $enrollment->pays->sum('amount');
 
                 $totals = $collectionsTotal + $yearlevelPaymentsTotal;
-                $totaBalance = $totals - $totalPayments;
 
-                return $totaBalance;
+                return $totals - $totalPayments; // Calculate balance
             });
 
         return '₱'.number_format($totalAmount, 2, '.', ',');
     }
+
+    private function calculateRemainingCollectionsUsingQuery(): string
+    {
+        $totalAmount = $this->getPageTableQuery()
+            ->join('collections', 'enrollments.id', '=', 'collections.enrollment_id')
+            ->join('yearlevelpayments', 'enrollments.id', '=', 'yearlevelpayments.enrollment_id')
+            ->join('pays', 'enrollments.id', '=', 'pays.enrollment_id')
+            ->sum(DB::raw('COALESCE(collections.amount, 0) + COALESCE(yearlevelpayments.amount, 0) - COALESCE(pays.amount, 0)'));
+
+        return '₱'.number_format($totalAmount, 2, '.', ',');
+    }
+
+    // private function calculateExpectedCollections(): string
+    // {
+    //     $totalAmount = $this->getPageTableQuery()
+    //         ->get()
+    //         ->sum(function ($enrollment) {
+    //             $collectionsTotal = $enrollment->collections->sum('amount');
+    //             $yearlevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
+
+    //             return $collectionsTotal + $yearlevelPaymentsTotal;
+    //         });
+
+    //     return '₱'.number_format($totalAmount, 2, '.', ',');
+    // }
+
+    // private function calculateCollectedAmounts(): string
+    // {
+    //     $totalAmount = $this->getPageTableQuery()
+    //         ->get()
+    //         ->sum(function ($enrollment) {
+    //             $totalPayments = $enrollment->pays->sum('amount');
+
+    //             return $totalPayments;
+    //         });
+
+    //     return '₱'.number_format($totalAmount, 2, '.', ',');
+    // }
+
+    // private function calculateRemainingCollections(): string
+    // {
+    //     $totalAmount = $this->getPageTableQuery()
+    //         ->get()
+    //         ->sum(function ($enrollment) {
+    //             $collectionsTotal = $enrollment->collections->sum('amount');
+    //             $yearlevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
+    //             $totalPayments = $enrollment->pays->sum('amount');
+
+    //             $totals = $collectionsTotal + $yearlevelPaymentsTotal;
+    //             $totaBalance = $totals - $totalPayments;
+
+    //             return $totaBalance;
+    //         });
+
+    //     return '₱'.number_format($totalAmount, 2, '.', ',');
+    // }
 
     protected function getStats(): array
     {

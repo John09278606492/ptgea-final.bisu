@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\StudResource\Pages;
 use App\Filament\Resources\StudResource\RelationManagers;
 use App\Filament\Resources\StudResource\RelationManagers\EnrollmentsRelationManager;
+use App\Filament\Resources\StudResource\RelationManagers\SiblingRelationManager;
 use App\Models\Collection as ModelsCollection;
 use App\Models\College;
 use App\Models\Program;
@@ -328,7 +329,6 @@ class StudResource extends Resource
                         'inactive' => 'danger',
                         'graduated' => 'gray',
                     })
-                    ->searchable()
                     ->searchable(),
                 // TextColumn::make('enrollments.collections.amount')
                 //     ->label('Total Amount')
@@ -359,14 +359,22 @@ class StudResource extends Resource
                     ->preload(),
             ])
             ->actions([
-                RelationManagerAction::make('pays-relation-manager')
+                RelationManagerAction::make('enrollments-relation-manager')
                     ->label('Enroll')
-                    ->color('success')
+                    ->color('primary')
                     ->icon('heroicon-m-identification')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
                     ->modalHeading('')
                     ->relationManager(EnrollmentsRelationManager::make()),
+                RelationManagerAction::make('siblings-relation-manager')
+                    ->label('Siblings')
+                    ->color('cyan')
+                    ->icon('heroicon-m-identification')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalHeading('')
+                    ->relationManager(SiblingRelationManager::make()),
                 Tables\Actions\EditAction::make()
                     ->color('warning'),
             ])

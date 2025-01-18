@@ -11,22 +11,67 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rules\Unique;
 use stdClass;
 
 class SiblingRelationManager extends RelationManager
 {
+    use CanBeEmbeddedInModals;
+
     protected static string $relationship = 'siblings';
+
+    protected static ?string $badgeTooltip = 'Number of siblings';
+
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        $count = $ownerRecord->siblings()->count();
+
+        return $count > 0 ? $count : 0;
+    }
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
+                Forms\Components\TextInput::make('stud_id')
+                    ->hidden()
+                    ->default(fn (RelationManager $livewire) => $livewire->ownerRecord->id),
                 Forms\Components\Select::make('sibling_id')
-                    ->label('Student')
-                    ->options(Stud::all()->pluck('firstname', 'id'))
-                    ->preload()
+                    ->label('Sibling Name')
+                    ->inlineLabel(false)
+                    ->placeholder('Select a student')
                     ->searchable()
-                    ->required(),
+                    ->getSearchResultsUsing(fn (string $search): array => Stud::where('studentidn', 'like', "%{$search}%")
+                        ->orWhere('firstname', 'like', "%{$search}%")
+                        ->orWhere('middlename', 'like', "%{$search}%")
+                        ->orWhere('lastname', 'like', "%{$search}%")
+                        ->limit(50)
+                        ->get()
+                        ->mapWithKeys(fn ($student) => [
+                            $student->id => "{$student->lastname}, {$student->firstname}, {$student->middlename}",
+                        ])
+                        ->toArray()
+                    )
+                    ->getOptionLabelUsing(fn ($value): ?string => optional(Stud::find($value), fn ($student) => "{$student->lastname}, {$student->firstname}, {$student->middlename}")
+                    )
+                    ->preload()
+                    ->required()
+                    ->unique(modifyRuleUsing: function (Unique $rule, callable $get) {
+                        $studId = $get('stud_id');
+                        $siblingId = $get('sibling_id');
+
+                        return $rule
+                            ->where('stud_id', $studId)
+                            ->where('sibling_id', $siblingId);
+                    },
+                        ignoreRecord: true,
+                    )
+                    ->columnSpanFull()
+                    ->validationMessages([
+                        'unique' => 'Student already associated with this record.',
+                    ]),
             ]);
     }
 
@@ -51,7 +96,7 @@ class SiblingRelationManager extends RelationManager
                     ->weight(FontWeight::Bold)
                     ->label('Last Name'),
                 Tables\Columns\TextColumn::make('stud.firstname')
-                    ->label('First Name'),  
+                    ->label('First Name'),
                 Tables\Columns\TextColumn::make('stud.middlename')
                     ->label('Middle Name'),
 
@@ -60,7 +105,10 @@ class SiblingRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->modalHeading('Add Sibling')
+                    ->disableCreateAnother()
+                    ->modalSubmitActionLabel('Save'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

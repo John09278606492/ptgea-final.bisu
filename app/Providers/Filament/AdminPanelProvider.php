@@ -32,6 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('PTGEA MANAGEMENT SYSTEM')
             ->login()
             ->colors([
+                'cyan' => Color::Cyan,
                 'danger' => Color::Rose,
                 'gray' => Color::Slate,
                 'info' => Color::Blue,
@@ -64,6 +65,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->sidebarCollapsibleOnDesktop();
+            ->sidebarCollapsibleOnDesktop()
+            ->passwordReset();
     }
 }

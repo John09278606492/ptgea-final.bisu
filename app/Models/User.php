@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements CanResetPassword
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -23,6 +25,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'canId',
     ];
 
     // public function schoolYear(): BelongsTo
@@ -53,5 +57,10 @@ class User extends Authenticatable
     public function invoiceRecords(): HasMany
     {
         return $this->hasMany(InvoiceRecord::class);
+    }
+
+    public function getIsAdminAttribute(): bool
+    {
+        return $this->role === 'admin'; // Adjust according to your database structure
     }
 }

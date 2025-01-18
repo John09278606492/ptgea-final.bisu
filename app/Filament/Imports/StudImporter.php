@@ -6,6 +6,9 @@ use App\Models\Stud;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class StudImporter extends Importer
 {
@@ -60,9 +63,68 @@ class StudImporter extends Importer
 
     public function resolveRecord(): ?Stud
     {
-        return Stud::firstOrNew([
+        // Find or create the student record
+        $students = Stud::firstOrNew([
             'studentidn' => $this->data['studentidn'],
         ]);
+
+        // Update student details
+        $students->firstname = $this->data['firstname'] ?? $students->firstname;
+        $students->middlename = $this->data['middlename'] ?? $students->middlename;
+        $students->lastname = $this->data['lastname'] ?? $students->lastname;
+
+        // Save the student record
+        $students->save();
+
+        // Prepare user details
+        $studentIDN = $students->studentidn;
+        $fullName = trim($students->firstname.' '.$students->middlename.' '.$students->lastname);
+        $studentEmail = 'ptgea'.'@'.$students->studentidn;
+        $hashedPassword = Hash::make($studentIDN);
+
+        // Debugging: Log the details
+        Log::info('Student Record', [
+            'studentidn' => $studentIDN,
+            'fullName' => $fullName,
+            'email' => $studentEmail,
+        ]);
+
+        // Check if the account exists in the users table
+        $existingAccount = DB::table('users')->where('canId', $studentIDN)->exists();
+
+        if ($existingAccount) {
+            // Update the existing record
+            $updated = DB::table('users')->where('canId', $studentIDN)
+                ->update([
+                    'name' => $fullName,
+                    'email' => $studentEmail,
+                    'role' => 'guest',
+                    'password' => $hashedPassword,
+                ]);
+
+            // Debugging: Log the update status
+            Log::info('User Updated', [
+                'canId' => $studentIDN,
+                'updated' => $updated,
+            ]);
+        } else {
+            // Insert a new user record
+            $inserted = DB::table('users')->insert([
+                'name' => $fullName,
+                'email' => $studentEmail,
+                'canId' => $studentIDN,
+                'role' => 'guest',
+                'password' => $hashedPassword,
+            ]);
+
+            // Debugging: Log the insertion status
+            Log::info('New User Inserted', [
+                'canId' => $studentIDN,
+                'inserted' => $inserted,
+            ]);
+        }
+
+        return $students;
     }
 
     public static function getCompletedNotificationBody(Import $import): string

@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
                 $action
                     ->color('secondary')
                     ->label(__('Close'))
-                    ->icon('heroicon-m-arrow-left-circle');
+                    ->icon('heroicon-m-x-circle');
             } elseif ($action->getName() === 'create') {
                 // Configure the "cancel" action
                 $action
@@ -65,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
                 ->icon('heroicon-m-plus-circle');
         });
         TextInput::configureUsing(function (TextInput $textInput) {
-            $textInput->inlineLabel();
+            // $textInput->inlineLabel();
         });
 
         // TextEntry::configureUsing(function (TextEntry $textEntry) {
@@ -83,17 +83,17 @@ class AppServiceProvider extends ServiceProvider
         //     $repeater->inlineLabel();
         // });
 
-        DatePicker::configureUsing(function (DatePicker $datePicker) {
-            $datePicker->inlineLabel();
-        });
+        // DatePicker::configureUsing(function (DatePicker $datePicker) {
+        //     $datePicker->inlineLabel();
+        // });
 
-        DateTimePicker::configureUsing(function (DateTimePicker $dateTimePicker) {
-            $dateTimePicker->inlineLabel();
-        });
+        // DateTimePicker::configureUsing(function (DateTimePicker $dateTimePicker) {
+        //     $dateTimePicker->inlineLabel();
+        // });
 
-        Select::configureUsing(function (Select $select) {
-            $select->inlineLabel();
-        });
+        // Select::configureUsing(function (Select $select) {
+        //     $select->inlineLabel();
+        // });
 
         Section::configureUsing(function (Section $section) {
             $section

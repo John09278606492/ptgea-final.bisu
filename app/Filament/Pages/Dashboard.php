@@ -15,6 +15,16 @@ class Dashboard extends \Filament\Pages\Dashboard
 
     protected ?string $maxContentWidth = 'full';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()->role === 'admin';
+    }
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()->role === 'admin';
+    }
+
     public function filtersForm(Form $form): Form
     {
         $today = Carbon::today();
@@ -34,7 +44,7 @@ class Dashboard extends \Filament\Pages\Dashboard
                             ->default($defaultSchoolYearId ?? 'All')
                             ->options(['All' => 'All'] + Schoolyear::all()->pluck('schoolyear', 'id')->toArray())
                             ->nullable()
-                            ->columnSpanFull(), 
+                            ->columnSpanFull(),
                     ]),
             ]);
     }

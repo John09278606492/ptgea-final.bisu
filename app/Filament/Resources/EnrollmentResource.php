@@ -428,11 +428,14 @@ class EnrollmentResource extends Resource
                 //     ->preload(),
             ])
             ->actions([
+                // Tables\Actions\ViewAction::make()
+                //     ->color('primary')
+                //     ->modalHeading('Student Academic Information'),
                 Tables\Actions\Action::make('viewReceipt')
+                    ->label('Invoice')
+                    ->color('cyan')
+                    ->icon('heroicon-m-document-text')
                     ->url(fn ($record) => self::getUrl('invoice', ['record' => $record->id])),
-                Tables\Actions\ViewAction::make()
-                    ->color('primary')
-                    ->modalHeading('Student Academic Information'),
                 RelationManagerAction::make('pays-relation-manager')
                     ->label('Pay')
                     ->icon('heroicon-m-banknotes')
@@ -446,11 +449,11 @@ class EnrollmentResource extends Resource
                     ->color('warning')
                     ->slideOver(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])
+            // ->bulkActions([
+            //     Tables\Actions\BulkActionGroup::make([
+            //         Tables\Actions\DeleteBulkAction::make(),
+            //     ]),
+            // ])
             ->emptyStateHeading('No records');
     }
 

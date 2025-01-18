@@ -40,19 +40,16 @@
 </div>
 
 <style>
-    /* For PDF rendering: Ensure uniform styles and prevent scaling issues */
     body {
         margin: 0;
         padding: 0;
         font-family: 'Arial', sans-serif;
     }
 
-    /* Remove gaps between table cells */
     table {
         border-spacing: 0;
     }
 
-    /* Ensure text aligns properly and grid lines are clear */
     th, td {
         border: 1px solid #ddd;
         padding: 10px;
