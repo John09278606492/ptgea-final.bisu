@@ -42,11 +42,13 @@ class Invoice extends Page
                 ->color('primary')
                 ->icon('heroicon-m-arrow-left-circle')
                 ->label('Go back')
+                ->livewireClickHandlerEnabled()
                 ->url($this->previousUrl ?? $this->getResource()::getUrl('index')),
             Action::make('print')
                 ->color('success')
                 ->icon('heroicon-m-printer')
                 ->label('Print')
+                ->livewireClickHandlerEnabled()
                 ->url(route('PRINT.INVOICE', ['id' => $this->record])),
         ];
     }

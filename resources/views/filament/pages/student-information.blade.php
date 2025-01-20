@@ -95,6 +95,13 @@
 
                     $remainingBalance = ($totalCollections + $totalYearLevelPayments) - $totalPays;
                 @endphp
+                <div class="flex justify-end">
+                    <a href="{{ route('PRINT.INVOICE.DOWNLOAD', ['id' => $payments->id]) }}">
+                        <x-filament::button size="xl" class="w-auto" icon="heroicon-m-arrow-down-tray">
+                            Download PDF
+                        </x-filament::button>
+                    </a>
+                </div>
                 <div class="p-6 bg-white rounded-lg shadow dark:bg-gray-800 dark:text-gray-200">
                     <h1 class="mb-6 text-2xl font-bold text-right dark:text-white">INVOICE</h1>
                     <p class="mb-6 text-right text-.5xl dark:text-white">PTGEA</p>

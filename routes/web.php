@@ -33,3 +33,6 @@ Route::get('/receipt/{pay}', function (Pay $pay) {
 
 Route::get('/print-invoice/{id}', [InvoiceController::class, 'printInvoice'])
     ->name('PRINT.INVOICE');
+
+Route::get('/download-invoice/{id}', [InvoiceController::class, 'downloadInvoice'])
+    ->name('PRINT.INVOICE.DOWNLOAD');

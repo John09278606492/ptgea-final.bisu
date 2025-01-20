@@ -446,8 +446,7 @@ class EnrollmentResource extends Resource
                     ->relationManager(PaysRelationManager::make()),
                 Tables\Actions\EditAction::make()
                     ->label('Edit')
-                    ->color('warning')
-                    ->slideOver(),
+                    ->color('warning'),
             ])
             // ->bulkActions([
             //     Tables\Actions\BulkActionGroup::make([

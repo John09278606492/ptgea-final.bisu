@@ -12,7 +12,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\Section as ComponentsSection;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Facades\FilamentView;
 use Filament\Tables\Actions\CreateAction as ActionsCreateAction;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::FOOTER,
+            fn (): View => view('footer'),
+        );
         Gate::before(function ($user) {
             // This ensures that the user model is correctly loaded
         });

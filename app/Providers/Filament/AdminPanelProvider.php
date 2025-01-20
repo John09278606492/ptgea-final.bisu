@@ -29,7 +29,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->brandName('PTGEA MANAGEMENT SYSTEM')
+            ->brandLogo(fn () => view('brandname'))
+            ->brandLogoHeight('5rem')
             ->login()
             ->colors([
                 'cyan' => Color::Cyan,
