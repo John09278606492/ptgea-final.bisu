@@ -1,0 +1,163 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\PayResource\Pages;
+use App\Filament\Resources\PayResource\RelationManagers;
+use App\Models\Pay;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
+use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Contracts\HasTable;
+use stdClass;
+
+class PayResource extends Resource
+{
+    protected static ?string $model = Pay::class;
+
+    protected static ?string $breadcrumb = 'Payment Record';
+
+    protected static ?string $navigationLabel = 'Payment Record';
+
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Select::make('enrollment_id')
+                    ->relationship('enrollment', 'id')
+                    ->required(),
+                Forms\Components\TextInput::make('amount')
+                    ->required()
+                    ->numeric(),
+                Forms\Components\Textarea::make('status')
+                    ->columnSpanFull(),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('#')->state(
+                    static function (HasTable $livewire, stdClass $rowLoop): string {
+                        return (string) (
+                            $rowLoop->iteration +
+                            ($livewire->getTableRecordsPerPage() * (
+                                $livewire->getTablePage() - 1
+                            ))
+                        );
+                    }
+                ),
+                Tables\Columns\TextColumn::make('enrollment.stud.full_name')
+                    ->label('Complete Name')
+                    ->weight(FontWeight::Bold)
+                    ->sortable(['lastname', 'firstname', 'middlename'])
+                    ->searchable([
+                        'lastname', 'firstname', 'middlename', 'studentidn'
+                    ]),
+                Tables\Columns\TextColumn::make('enrollment.college.college')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('enrollment.program.program')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('enrollment.yearlevel.yearlevel')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('enrollment.schoolyear.schoolyear')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('amount')
+                    ->numeric()
+                    ->money('PHP')
+                    ->summarize(Sum::make()->money('PHP')->label('Total'))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Date/Time Paid')
+                    ->dateTime('M d, Y - h:i a')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Date/Time Updated')
+                    ->dateTime('M d, Y h:i a')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                Filter::make('date_range')
+                    ->form([
+                        Forms\Components\DatePicker::make('start_date')
+                            ->label('Start Date')
+                            ->placeholder('Select start date')
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                // Clear the end_date when start_date is changed or cleared
+                                $set('end_date', null);
+                            }),
+                        Forms\Components\DatePicker::make('end_date')
+                            ->label('End Date')
+                            ->placeholder('Select end date')
+                            ->reactive()
+                            ->minDate(fn (callable $get) => $get('start_date')), // Ensure end_date can't be before start_date
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['start_date'] ?? null,
+                                fn (Builder $query, $startDate) => $query->whereDate('created_at', '>=', $startDate)
+                            )
+                            ->when(
+                                $data['end_date'] ?? null,
+                                fn (Builder $query, $endDate) => $query->whereDate('created_at', '<=', $endDate)
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if (! empty($data['start_date'])) {
+                            $indicators['start_date'] = 'Start Date: '.\Carbon\Carbon::parse($data['start_date'])->format('M d, Y');
+                        }
+
+                        if (! empty($data['end_date'])) {
+                            $indicators['end_date'] = 'End Date: '.\Carbon\Carbon::parse($data['end_date'])->format('M d, Y');
+                        }
+
+                        return $indicators;
+                    }),
+            ])
+            ->deferLoading()
+            ->actions([
+                Tables\Actions\EditAction::make()
+                ->hidden(),
+            ]);
+            // ->bulkActions([
+            //     Tables\Actions\BulkActionGroup::make([
+            //         Tables\Actions\DeleteBulkAction::make(),
+            //     ]),
+            // ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListPays::route('/'),
+            'create' => Pages\CreatePay::route('/create'),
+            'edit' => Pages\EditPay::route('/{record}/edit'),
+        ];
+    }
+}

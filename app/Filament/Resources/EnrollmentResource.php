@@ -284,7 +284,7 @@ class EnrollmentResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stud.full_name')
-                    ->label('Full Name')
+                    ->label('Complete Name')
                     ->weight(FontWeight::Bold)
                     ->sortable(['lastname', 'firstname', 'middlename'])
                     ->searchable([
@@ -427,6 +427,7 @@ class EnrollmentResource extends Resource
                 //     ->searchable()
                 //     ->preload(),
             ])
+            ->deferLoading()
             ->actions([
                 // Tables\Actions\ViewAction::make()
                 //     ->color('primary')
