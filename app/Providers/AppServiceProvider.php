@@ -38,6 +38,14 @@ class AppServiceProvider extends ServiceProvider
             PanelsRenderHook::FOOTER,
             fn (): View => view('footer'),
         );
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
+            fn (): View => view('login_button'),
+        );
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+            fn (): View => view('title'),
+        );
         Gate::before(function ($user) {
             // This ensures that the user model is correctly loaded
         });

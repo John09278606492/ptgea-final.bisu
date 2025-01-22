@@ -5,6 +5,8 @@ namespace App\Providers\Filament;
 use App\Filament\Widgets\AdminWidget;
 use App\Filament\Widgets\CollegeWidget;
 use App\Filament\Widgets\ProgramWidget;
+use App\Http\Middleware\EnsureLoginRole;
+use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -29,9 +31,11 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            // ->brandLogo(asset('images/ptgea_logo.png'))
             ->brandLogo(fn () => view('brandname'))
             ->brandLogoHeight('5rem')
             ->login()
+            ->defaultThemeMode(ThemeMode::Light)
             ->colors([
                 'cyan' => Color::Cyan,
                 'danger' => Color::Rose,
@@ -62,6 +66,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                // EnsureLoginRole::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

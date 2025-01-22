@@ -1,7 +1,9 @@
 <?php
 
+use App\Filament\Pages\StudentInformation;
 use App\Http\Controllers\InvoiceController;
 use App\Models\Pay;
+use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,7 +19,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
+
+Route::get('/student-information', StudentInformation::class)->name('student.information');
+
+Route::get('/student-information', StudentInformation::class)->name('student_information');
 
 Route::get('/receipt/{pay}', function (Pay $pay) {
     $receiptData = [
