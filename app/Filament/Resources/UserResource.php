@@ -33,8 +33,10 @@ class UserResource extends Resource
                 Section::make()
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->required()
+                        ->required()
+                        ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/\\b\\w/g, char => char.toUpperCase())'])
                             ->maxLength(255),
+
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->required()
@@ -76,7 +78,11 @@ class UserResource extends Resource
                         );
                     }
                 ),
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('lastname')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('firstname')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('middlename')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),

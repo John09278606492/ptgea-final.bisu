@@ -44,6 +44,7 @@ class Dashboard extends \Filament\Pages\Dashboard
                             ->default($defaultSchoolYearId ?? 'All')
                             ->options(['All' => 'All'] + Schoolyear::all()->pluck('schoolyear', 'id')->toArray())
                             ->nullable()
+                            ->hint('')
                             ->columnSpanFull(),
                     ]),
             ]);

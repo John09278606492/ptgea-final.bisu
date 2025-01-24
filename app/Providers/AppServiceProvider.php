@@ -43,7 +43,7 @@ class AppServiceProvider extends ServiceProvider
             fn (): View => view('login_button'),
         );
         FilamentView::registerRenderHook(
-            PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
+            PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
             fn (): View => view('title'),
         );
         Gate::before(function ($user) {

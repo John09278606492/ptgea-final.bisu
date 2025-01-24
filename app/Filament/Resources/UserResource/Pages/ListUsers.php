@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\UserResource\Pages;
 
+use App\Filament\Imports\UserImporter;
 use App\Filament\Resources\UserResource;
 use Filament\Actions;
+use Filament\Actions\ImportAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListUsers extends ListRecords
@@ -15,6 +17,11 @@ class ListUsers extends ListRecords
         return [
             Actions\CreateAction::make()
                 ->label('New admin'),
+            ImportAction::make('importEnrollment')
+                ->label('Bulk create student account')
+                ->color('success')
+                ->icon('heroicon-m-user-group')
+                ->importer(UserImporter::class),
         ];
     }
 

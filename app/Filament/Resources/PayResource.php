@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Enums\FiltersLayout;
 use stdClass;
 
 class PayResource extends Resource
@@ -131,13 +132,16 @@ class PayResource extends Resource
                         }
 
                         return $indicators;
-                    }),
-            ])
+                    })
+                    ->columns(2)
+                    ->columnSpan(2),
+                ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
             ->deferLoading()
             ->actions([
                 Tables\Actions\EditAction::make()
                 ->hidden(),
-            ]);
+            ])
+            ->recordUrl(false);
             // ->bulkActions([
             //     Tables\Actions\BulkActionGroup::make([
             //         Tables\Actions\DeleteBulkAction::make(),

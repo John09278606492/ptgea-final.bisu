@@ -39,12 +39,12 @@ class ListEnrollments extends ListRecords
         return __('Student Payment');
     }
 
-    public function getHeaderWidgets(): array
-    {
-        return [
-            TotalPayableWidget::class,
-        ];
-    }
+    // public function getHeaderWidgets(): array
+    // {
+    //     return [
+    //         TotalPayableWidget::class,
+    //     ];
+    // }
 
     // public function mount(): void
     // {

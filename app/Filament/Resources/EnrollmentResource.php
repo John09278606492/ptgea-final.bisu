@@ -28,6 +28,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -239,24 +240,6 @@ class EnrollmentResource extends Resource
                             ->gridDirection('row'),
 
                     ]),
-                //     ->columns(2),
-                // Forms\Components\Select::make('stud_id')
-                //     ->relationship('stud', 'id')
-                //     ->required(),
-                // Forms\Components\Select::make('college_id')
-                //     ->relationship('college', 'id')
-                //     ->required(),
-                // Forms\Components\Select::make('program_id')
-                //     ->relationship('program', 'id')
-                //     ->required(),
-                // Forms\Components\Select::make('yearlevel_id')
-                //     ->relationship('yearlevel', 'id')
-                //     ->required(),
-                // Forms\Components\Select::make('schoolyear_id')
-                //     ->relationship('schoolyear', 'id')
-                //     ->required(),
-                // Forms\Components\TextInput::make('status')
-                //     ->maxLength(255),
             ]);
     }
 
@@ -410,23 +393,11 @@ class EnrollmentResource extends Resource
                         }
 
                         return $indicators;
-                    }),
-                // SelectFilter::make('college')
-                //     ->label('College')
-                //     ->relationship('college', 'college')
-                //     ->searchable()
-                //     ->preload(),
-                // SelectFilter::make('program')
-                //     ->label('Program')
-                //     ->relationship('program', 'program')
-                //     ->searchable()
-                //     ->preload(),
-                // SelectFilter::make('yearlevel')
-                //     ->label('Year Level')
-                //     ->relationship('yearlevel', 'yearlevel')
-                //     ->searchable()
-                //     ->preload(),
-            ])
+                    })
+                    ->columns(3)
+                    ->columnSpan(3)
+
+            ], layout: FiltersLayout::AboveContent)->filtersFormColumns(4)
             ->deferLoading()
             ->actions([
                 // Tables\Actions\ViewAction::make()

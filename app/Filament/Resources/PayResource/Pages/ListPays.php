@@ -2,8 +2,11 @@
 
 namespace App\Filament\Resources\PayResource\Pages;
 
+use App\Filament\Exports\PayExporter;
 use App\Filament\Resources\PayResource;
 use Filament\Actions;
+use Filament\Actions\ExportAction;
+use Filament\Actions\Exports\Enums\ExportFormat;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -17,7 +20,15 @@ class ListPays extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-            ->hidden(),
+                ->hidden(),
+            ExportAction::make()
+                ->exporter(PayExporter::class)
+                ->color('success')
+                ->formats([
+                    ExportFormat::Csv,
+                ])
+                ->icon('heroicon-m-arrow-down-on-square-stack')
+                ->label('Export Payment Record')
         ];
     }
 
