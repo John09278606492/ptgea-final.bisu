@@ -16,7 +16,12 @@ class EditStud extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Action::make('return')
+                ->color('primary')
+                ->icon('heroicon-m-arrow-left-circle')
+                ->label('Go back')
+                ->livewireClickHandlerEnabled()
+                ->url(redirect()->back()->getTargetUrl()),
         ];
     }
 

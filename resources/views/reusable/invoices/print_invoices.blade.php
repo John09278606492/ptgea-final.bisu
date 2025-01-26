@@ -156,3 +156,193 @@
         <div style="text-align: right; font-size: 14px; font-weight: bold;">Remaining Balance: ₱{{ number_format($remainingBalance, 2) }}</div>
     </div>
 </div>
+{{-- @php
+    $totalCollections = $payments->collections->sum('amount');
+    $totalYearLevelPayments = $payments->yearlevelpayments->sum('amount');
+    $totalPays = $payments->pays->sum('amount');
+    $remainingBalance = ($totalCollections + $totalYearLevelPayments) - $totalPays;
+@endphp
+
+<style>
+    @page {
+        size: 1.39in 2.78in; /* Custom paper size in inches */
+        margin: 0;
+    }
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: DejaVu Sans, sans-serif;
+        font-size: 2px; /* Scaled down font size */
+        color: #333;
+    }
+    .container {
+        width: 1.3in; /* Adjusted to fit within paper size */
+        margin: 0 auto;
+        padding: 0.1rem;
+        background: #fff;
+        border-radius: 2px; /* Scaled down border radius */
+    }
+    h1, h2 {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        font-size: 2px; /* Scaled down font size */
+        font-weight: bold;
+    }
+    h2 {
+        margin-bottom: 0.1rem;
+        text-align: left;
+        font-size: 2px;
+    }
+    .info, .fees, .payments {
+        margin-bottom: 0.1rem;
+        line-height: 1;
+    }
+    .info div, .fees div {
+        display: flex;
+        justify-content: space-between;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0.1rem;
+    }
+    th, td {
+        padding: 0.1rem;
+        border: 0.5px solid #ccc; /* Thinner borders */
+        text-align: left;
+    }
+    th {
+        background: #f9f9f9;
+        font-size: 2px; /* Scaled down font size */
+    }
+    td {
+        font-size: 2px; /* Scaled down font size */
+    }
+    .summary {
+        text-align: right;
+        font-weight: bold;
+        font-size: 2px; /* Scaled down font size */
+    }
+</style>
+
+<div class="container">
+    <h1>INVOICE</h1>
+    <p style="text-align: center; font-size: 2px;">PTGEA, San Isidro, Calape, Bohol | 6328</p>
+    <p style="text-align: center; font-size: 2px;">Contact: 0927 860 6492</p>
+
+    <div class="info">
+        <h2>Student Information</h2>
+        <div><span>Name:</span> <span>{{ $payments->stud->firstname }} {{ $payments->stud->middlename }} {{ $payments->stud->lastname }}</span></div>
+        <div><span>Student ID:</span> <span>{{ $payments->stud->studentidn }}</span></div>
+        <div><span>College:</span> <span>{{ $payments->college->college }}</span></div>
+        <div><span>Program:</span> <span>{{ $payments->program->program }}</span></div>
+        <div><span>Year Level:</span> <span>{{ $payments->yearlevel->yearlevel }}</span></div>
+        <div><span>School Year:</span> <span>{{ $payments->schoolyear->schoolyear }}</span></div>
+    </div>
+
+    <div class="fees">
+        <h2>Siblings Information</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>College</th>
+                    <th>Program</th>
+                    <th>Year</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($siblingsInformation->siblings as $sib)
+                    <tr>
+                        <td>{{ $sib->stud->firstname }} {{ $sib->stud->middlename }} {{ $sib->stud->lastname }}</td>
+                        <td>{{ $sib->stud->enrollments->college->college }}</td>
+                        <td>{{ $sib->stud->enrollments->program->program }}</td>
+                        <td>{{ $sib->stud->enrollments->yearlevel->yearlevel }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" style="text-align: center;">No sibling/s found.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div class="fees">
+        <h2>Year Level Fee</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($payments->yearlevelpayments as $fee)
+                    <tr>
+                        <td>{{ $fee->description }}</td>
+                        <td style="text-align: right;">₱{{ number_format($fee->amount, 2) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="2" style="text-align: center;">No year level fees.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        <div class="summary">Total: ₱{{ number_format($payments->yearlevelpayments->sum('amount'), 2) }}</div>
+    </div>
+
+    <div class="fees">
+        <h2>School Year Fee</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($payments->collections as $fee)
+                    <tr>
+                        <td>{{ $fee->description }} - Sem {{ $fee->semester->semester }}</td>
+                        <td style="text-align: right;">₱{{ number_format($fee->amount, 2) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="2" style="text-align: center;">No school year fees.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        <div class="summary">Total: ₱{{ number_format($payments->collections->sum('amount'), 2) }}</div>
+    </div>
+
+    <div class="payments">
+        <h2>Payment History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($payments->pays as $pay)
+                    <tr>
+                        <td>{{ $pay->created_at->format('Y-m-d') }}</td>
+                        <td style="text-align: right;">₱{{ number_format($pay->amount, 2) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="2" style="text-align: center;">No payment history found.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        <div class="summary">Total Paid: ₱{{ number_format($payments->pays->sum('amount'), 2) }}</div>
+    </div>
+
+    <div class="summary">Remaining Balance: ₱{{ number_format($remainingBalance, 2) }}</div>
+</div> --}}

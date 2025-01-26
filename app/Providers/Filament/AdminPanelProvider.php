@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\CustomLogin;
+use App\Filament\Pages\Auth\Login;
 use App\Filament\Widgets\AdminWidget;
 use App\Filament\Widgets\CollegeWidget;
 use App\Filament\Widgets\ProgramWidget;
@@ -10,10 +12,12 @@ use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Notifications\Notification;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\MaxWidth;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -35,7 +39,8 @@ class AdminPanelProvider extends PanelProvider
             // ->brandLogo(asset('images/ptgea_logo.png'))
             ->brandLogo(fn () => view('brandname'))
             ->brandLogoHeight('5rem')
-            ->login()
+            ->login(Login::class)
+            ->favicon(asset('images/bisu_logo.png'))
             ->defaultThemeMode(ThemeMode::Light)
             ->maxContentWidth(MaxWidth::Full)
             ->colors([
@@ -74,6 +79,7 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->sidebarCollapsibleOnDesktop()
-            ->passwordReset();
+            ->passwordReset()
+            ->emailVerification();
     }
 }

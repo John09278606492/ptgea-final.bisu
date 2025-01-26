@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Filament\Pages\Auth\Login;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\DatePicker;
@@ -18,6 +19,7 @@ use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Filament\Facades\Filament;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,7 +41,7 @@ class AppServiceProvider extends ServiceProvider
             fn (): View => view('footer'),
         );
         FilamentView::registerRenderHook(
-            PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
+            PanelsRenderHook::AUTH_LOGIN_FORM_AFTER,
             fn (): View => view('login_button'),
         );
         FilamentView::registerRenderHook(

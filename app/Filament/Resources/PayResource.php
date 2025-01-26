@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PayResource\Pages;
 use App\Filament\Resources\PayResource\RelationManagers;
 use App\Models\Pay;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -46,6 +47,8 @@ class PayResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $dateToday = Carbon::today();
+
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('#')->state(
@@ -95,10 +98,11 @@ class PayResource extends Resource
             ->filters([
                 Filter::make('date_range')
                     ->form([
-                        Forms\Components\DatePicker::make('start_date')
+                        Forms\Components\DatePicker::make('start_date') 
                             ->label('Start Date')
                             ->placeholder('Select start date')
                             ->reactive()
+                            ->default($dateToday ?? null)
                             ->afterStateUpdated(function ($state, callable $set) {
                                 // Clear the end_date when start_date is changed or cleared
                                 $set('end_date', null);
@@ -107,6 +111,7 @@ class PayResource extends Resource
                             ->label('End Date')
                             ->placeholder('Select end date')
                             ->reactive()
+                            ->default($dateToday ?? null)
                             ->minDate(fn (callable $get) => $get('start_date')), // Ensure end_date can't be before start_date
                     ])
                     ->query(function (Builder $query, array $data): Builder {

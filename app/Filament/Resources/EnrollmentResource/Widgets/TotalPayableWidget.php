@@ -82,51 +82,6 @@ class TotalPayableWidget extends BaseWidget
         return '₱'.number_format($totalAmount, 2, '.', ',');
     }
 
-    // private function calculateExpectedCollections(): string
-    // {
-    //     $totalAmount = $this->getPageTableQuery()
-    //         ->get()
-    //         ->sum(function ($enrollment) {
-    //             $collectionsTotal = $enrollment->collections->sum('amount');
-    //             $yearlevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
-
-    //             return $collectionsTotal + $yearlevelPaymentsTotal;
-    //         });
-
-    //     return '₱'.number_format($totalAmount, 2, '.', ',');
-    // }
-
-    // private function calculateCollectedAmounts(): string
-    // {
-    //     $totalAmount = $this->getPageTableQuery()
-    //         ->get()
-    //         ->sum(function ($enrollment) {
-    //             $totalPayments = $enrollment->pays->sum('amount');
-
-    //             return $totalPayments;
-    //         });
-
-    //     return '₱'.number_format($totalAmount, 2, '.', ',');
-    // }
-
-    // private function calculateRemainingCollections(): string
-    // {
-    //     $totalAmount = $this->getPageTableQuery()
-    //         ->get()
-    //         ->sum(function ($enrollment) {
-    //             $collectionsTotal = $enrollment->collections->sum('amount');
-    //             $yearlevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
-    //             $totalPayments = $enrollment->pays->sum('amount');
-
-    //             $totals = $collectionsTotal + $yearlevelPaymentsTotal;
-    //             $totaBalance = $totals - $totalPayments;
-
-    //             return $totaBalance;
-    //         });
-
-    //     return '₱'.number_format($totalAmount, 2, '.', ',');
-    // }
-
     protected function getStats(): array
     {
         return [

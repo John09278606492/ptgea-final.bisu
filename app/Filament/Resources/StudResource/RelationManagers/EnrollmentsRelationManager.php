@@ -239,7 +239,6 @@ class EnrollmentsRelationManager extends RelationManager
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->emptyStateHeading('No enrollments yet')
-            ->emptyStateDescription('Once student is enrolled, it will appear here.');
+            ->emptyStateHeading('No enrollments found.');
     }
 }

@@ -43,7 +43,7 @@ class Invoice extends Page
                 ->icon('heroicon-m-arrow-left-circle')
                 ->label('Go back')
                 ->livewireClickHandlerEnabled()
-                ->url($this->previousUrl ?? $this->getResource()::getUrl('index')),
+                ->url(redirect()->back()->getTargetUrl()),
             Action::make('print')
                 ->color('success')
                 ->icon('heroicon-m-printer')

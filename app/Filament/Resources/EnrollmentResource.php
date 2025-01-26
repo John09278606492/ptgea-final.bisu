@@ -50,14 +50,10 @@ class EnrollmentResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::get()->filter(function ($enrollment) {
-            $balance = $enrollment->balance; // Calls the `getBalanceAttribute` accessor
-
-            return $balance === 'No Payments' || floatval(str_replace(['₱', ','], '', $balance)) > 0;
-        })->count();
+        return static::getModel()::where('status', NULL)->count();
     }
 
-    protected static ?string $navigationBadgeTooltip = 'Not fully paid';
+    protected static ?string $navigationBadgeTooltip = 'Total number of students not fully paid';
 
     public static function form(Form $form): Form
     {
@@ -321,7 +317,7 @@ class EnrollmentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('schoolyear')
+                SelectFilter::make('schoolyear_id')
                     ->label('School Year')
                     ->relationship('schoolyear', 'schoolyear')
                     ->default($defaultSchoolYearId ?? 'All')

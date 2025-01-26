@@ -23,7 +23,8 @@ class EditEnrollment extends EditRecord
                 ->color('primary')
                 ->icon('heroicon-m-arrow-left-circle')
                 ->label('Go back')
-                ->url(fn () => static::getResource()::getUrl('index')),
+                ->livewireClickHandlerEnabled()
+                ->url(redirect()->back()->getTargetUrl()),
             // Actions\DeleteAction::make(),
         ];
     }

@@ -41,24 +41,35 @@ class PaysRelationManager extends RelationManager
                     ->rules([
                         function () {
                             return function ($attribute, $value, $fail) {
-                                // Retrieve the parent model through the relationship
                                 $parentModel = $this->getRelationship()->getParent();
 
                                 if (method_exists($parentModel, 'getBalanceAttribute')) {
                                     $balance = $parentModel->getBalanceAttribute();
 
-                                    // Convert balance to numeric for comparison
-                                    $numericBalance = str_replace([',', '₱'], '', $balance);
+                                    $numericBalance = (float) str_replace([',', '₱'], '', $balance);
 
-                                    if ((float) $value > (float) $numericBalance) {
-                                        $fail('The payment amount cannot exceed the remaining balance of ₱'.number_format((float) $numericBalance, 2));
+                                    if ($numericBalance <= 0) {
+                                        $fail('Full Paid! Remaining balance is: ₱' . number_format($numericBalance, 2));
                                     }
                                 } else {
                                     $fail('Balance validation failed due to missing method.');
                                 }
                             };
                         },
-                    ]),
+                    ])
+                    ->dehydrateStateUsing(function ($state) {
+                        $parentModel = $this->getRelationship()->getParent();
+
+                        if (method_exists($parentModel, 'getBalanceAttribute')) {
+                            $balance = $parentModel->getBalanceAttribute();
+                            $numericBalance = (float) str_replace([',', '₱'], '', $balance);
+
+                            if ($numericBalance > 0) {
+                                return min((float) str_replace(',', '', $state), $numericBalance);
+                            }
+                        }
+                        return (float) str_replace(',', '', $state);
+                    }),
                 Forms\Components\TextInput::make('status')
                     ->readOnly()
                     ->default('paid'),
@@ -158,13 +169,62 @@ class PaysRelationManager extends RelationManager
                     }),
                 Tables\Actions\EditAction::make()
                     ->hidden(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                ->after(function (Pay $record) {
+                    $parentModel = $record->enrollment;
+
+                    if ($parentModel) {
+                        $balance = $parentModel->getBalanceAttribute();
+
+                        $numericBalance = str_replace([',', '₱'], '', $balance);
+
+                        if ((float) $numericBalance <= 0) {
+                            DB::table('enrollments')
+                                ->where('id', $this->getOwnerRecord()->id)
+                                ->update(['status' => 'paid']);
+                            logger()->info('Payment is correct and balance is zero or below.');
+                        } else {
+                            DB::table('enrollments')
+                                ->where('id', $this->getOwnerRecord()->id)
+                                ->update(['status' => NULL]);
+                            logger()->info("Remaining balance: {$numericBalance}");
+                        }
+                    } else {
+                        logger()->error('No related enrollment found for payment record.');
+                    }
+                }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                    ->after(function ($records) { // `$records` is a collection of selected records
+                        foreach ($records as $record) {
+                            $parentModel = $record->enrollment;
+
+                            if ($parentModel) {
+                                $balance = $parentModel->getBalanceAttribute();
+
+                                $numericBalance = str_replace([',', '₱'], '', $balance);
+
+                                if ((float) $numericBalance <= 0) {
+                                    DB::table('enrollments')
+                                        ->where('id', $parentModel->id) // Use the `enrollment` model's ID
+                                        ->update(['status' => 'paid']);
+                                    logger()->info("Payment is correct for enrollment ID {$parentModel->id}, balance is zero or below.");
+                                } else {
+                                    DB::table('enrollments')
+                                        ->where('id', $parentModel->id) // Use the `enrollment` model's ID
+                                        ->update(['status' => NULL]);
+                                    logger()->info("Remaining balance for enrollment ID {$parentModel->id}: {$numericBalance}");
+                                }
+                            } else {
+                                logger()->error("No related enrollment found for payment record ID {$record->id}.");
+                            }
+                        }
+                    }),
                 ]),
             ])
+
             ->heading('Payment history')
             ->emptyStateHeading('No payments yet')
             ->emptyStateDescription('Once student pays, it will appear here.');

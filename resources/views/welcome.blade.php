@@ -28,7 +28,7 @@
     <!-- PTGEA Section with Logo and Info (Upper Container) -->
     <div class="py-12 upper-container">
         <div class="container mx-auto text-center">
-            <img src="{{ asset('images/ptgea_logo.png') }}" alt="PTGEA Logo" class="w-32 mx-auto mb-6">
+            <img src="{{ asset('images/bisu_logo.png') }}" alt="PTGEA Logo" class="w-32 mx-auto mb-6">
             <h1 class="mb-4 text-2xl font-bold">Bohol Island State University - Calape Campus</h1>
             <h1 class="mb-4 text-4xl font-bold">Parents, Teachers, Guardians and Employees Association</h1>
             <h2 class="mb-4 text-3xl font-bold">Management System</h2>

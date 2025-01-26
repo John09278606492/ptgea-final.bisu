@@ -118,6 +118,6 @@ class SiblingRelationManager extends RelationManager
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])->emptyStateDescription('No siblings found.');
     }
 }
