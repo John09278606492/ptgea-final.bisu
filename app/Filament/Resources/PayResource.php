@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\FiltersLayout;
+use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 use stdClass;
 
 class PayResource extends Resource
@@ -96,50 +98,53 @@ class PayResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Filter::make('date_range')
-                    ->form([
-                        Forms\Components\DatePicker::make('start_date') 
-                            ->label('Start Date')
-                            ->placeholder('Select start date')
-                            ->reactive()
-                            ->default($dateToday ?? null)
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                // Clear the end_date when start_date is changed or cleared
-                                $set('end_date', null);
-                            }),
-                        Forms\Components\DatePicker::make('end_date')
-                            ->label('End Date')
-                            ->placeholder('Select end date')
-                            ->reactive()
-                            ->default($dateToday ?? null)
-                            ->minDate(fn (callable $get) => $get('start_date')), // Ensure end_date can't be before start_date
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['start_date'] ?? null,
-                                fn (Builder $query, $startDate) => $query->whereDate('created_at', '>=', $startDate)
-                            )
-                            ->when(
-                                $data['end_date'] ?? null,
-                                fn (Builder $query, $endDate) => $query->whereDate('created_at', '<=', $endDate)
-                            );
-                    })
-                    ->indicateUsing(function (array $data): array {
-                        $indicators = [];
+                DateRangeFilter::make('created_at')
+                    ->label('Date Range')
+                    ->defaultToday(),
+                // Filter::make('date_range')
+                //     ->form([
+                //         Forms\Components\DatePicker::make('start_date')
+                //             ->label('Start Date')
+                //             ->placeholder('Select start date')
+                //             ->reactive()
+                //             ->default($dateToday ?? null)
+                //             ->afterStateUpdated(function ($state, callable $set) {
+                //                 // Clear the end_date when start_date is changed or cleared
+                //                 $set('end_date', null);
+                //             }),
+                //         Forms\Components\DatePicker::make('end_date')
+                //             ->label('End Date')
+                //             ->placeholder('Select end date')
+                //             ->reactive()
+                //             ->default($dateToday ?? null)
+                //             ->minDate(fn (callable $get) => $get('start_date')), // Ensure end_date can't be before start_date
+                //     ])
+                //     ->query(function (Builder $query, array $data): Builder {
+                //         return $query
+                //             ->when(
+                //                 $data['start_date'] ?? null,
+                //                 fn (Builder $query, $startDate) => $query->whereDate('created_at', '>=', $startDate)
+                //             )
+                //             ->when(
+                //                 $data['end_date'] ?? null,
+                //                 fn (Builder $query, $endDate) => $query->whereDate('created_at', '<=', $endDate)
+                //             );
+                //     })
+                //     ->indicateUsing(function (array $data): array {
+                //         $indicators = [];
 
-                        if (! empty($data['start_date'])) {
-                            $indicators['start_date'] = 'Start Date: '.\Carbon\Carbon::parse($data['start_date'])->format('M d, Y');
-                        }
+                //         if (! empty($data['start_date'])) {
+                //             $indicators['start_date'] = 'Start Date: '.\Carbon\Carbon::parse($data['start_date'])->format('M d, Y');
+                //         }
 
-                        if (! empty($data['end_date'])) {
-                            $indicators['end_date'] = 'End Date: '.\Carbon\Carbon::parse($data['end_date'])->format('M d, Y');
-                        }
+                //         if (! empty($data['end_date'])) {
+                //             $indicators['end_date'] = 'End Date: '.\Carbon\Carbon::parse($data['end_date'])->format('M d, Y');
+                //         }
 
-                        return $indicators;
-                    })
-                    ->columns(2)
-                    ->columnSpan(2),
+                //         return $indicators;
+                //     })
+                //     ->columns(2)
+                //     ->columnSpan(2),
                 ], layout: FiltersLayout::AboveContent)->filtersFormColumns(2)
             ->deferLoading()
             ->actions([

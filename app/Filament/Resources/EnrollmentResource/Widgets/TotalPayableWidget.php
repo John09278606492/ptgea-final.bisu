@@ -14,9 +14,9 @@ class TotalPayableWidget extends BaseWidget
 {
     use InteractsWithPageTable;
 
-    protected static bool $isLazy = false;
+    // protected static bool $isLazy = true;
 
-    protected static ?string $pollingInterval = null;
+    // protected static ?string $pollingInterval = null;
 
     protected function getTablePage(): string
     {

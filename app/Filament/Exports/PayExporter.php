@@ -6,6 +6,7 @@ use App\Models\Pay;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
+use stdClass;
 
 class PayExporter extends Exporter
 {
@@ -13,9 +14,15 @@ class PayExporter extends Exporter
 
     public static function getColumns(): array
     {
+        static $counter = 1;
         return [
+            ExportColumn::make('count')
+                ->label('#')
+                ->state(function (stdClass $row) use (&$counter) {
+                    return (string) $counter++;
+                }),
             ExportColumn::make('enrollment.stud.studentidn')
-                ->label('ID'),
+                ->label('I.D Number'),
             ExportColumn::make('enrollment.stud.lastname')
                 ->label('Last Name'),
             ExportColumn::make('enrollment.stud.firstname')
@@ -43,7 +50,7 @@ class PayExporter extends Exporter
 
     public static function getCompletedNotificationBody(Export $export): string
     {
-        $body = 'Your pay export has completed and ' . number_format($export->successful_rows) . ' ' . str('row')->plural($export->successful_rows) . ' exported.';
+        $body = 'The student payment record export has completed and ' . number_format($export->successful_rows) . ' ' . str('row')->plural($export->successful_rows) . ' exported.';
 
         if ($failedRowsCount = $export->getFailedRowsCount()) {
             $body .= ' ' . number_format($failedRowsCount) . ' ' . str('row')->plural($failedRowsCount) . ' failed to export.';

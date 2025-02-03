@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\EnrollmentResource\Pages;
 
+use App\Filament\Exports\EnrollmentExporter;
+use App\Filament\Imports\EnrollmentImporter;
 use App\Filament\Resources\EnrollmentResource;
 use App\Filament\Resources\EnrollmentResource\Widgets\TotalPayableWidget;
 use App\Models\Enrollment;
 use Filament\Actions;
+use Filament\Actions\ExportAction;
+use Filament\Actions\Exports\Enums\ExportFormat;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
@@ -15,6 +19,8 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Livewire\Attributes\On;
+use Filament\Actions\Exports\Models\Export;
 
 class ListEnrollments extends ListRecords
 {
@@ -29,6 +35,17 @@ class ListEnrollments extends ListRecords
         return [
             Actions\CreateAction::make()
                 ->hidden(),
+            ExportAction::make()
+                ->exporter(EnrollmentExporter::class)
+                ->color('success')
+                ->formats([
+                    ExportFormat::Xlsx,
+                ])
+                ->columnMapping(false)
+                ->icon('heroicon-m-arrow-down-on-square-stack')
+                ->label('Export')
+                ->modalHeading('Export Student Payment Information')
+                ->fileName(fn (Export $export): string => "student-payment-info-{$export->getKey()}.xlsx")
         ];
     }
 
@@ -42,12 +59,12 @@ class ListEnrollments extends ListRecords
         return __('Student Payment');
     }
 
-    // public function getHeaderWidgets(): array
-    // {
-    //     return [
-    //         TotalPayableWidget::class,
-    //     ];
-    // }
+    public function getHeaderWidgets(): array
+    {
+        return [
+            TotalPayableWidget::class,
+        ];
+    }
 
     // public function mount(): void
     // {
@@ -63,30 +80,61 @@ class ListEnrollments extends ListRecords
     // public function getTableFilters(): array
     // {
     //     return $this->table->getFilters();
-    // 
-    public function getTabs(): array
-    {
-        $schoolyearId = $this->tableFilters['schoolyear_id'] ?? null;
+    //
 
-        $badgeCountPaid = $schoolyearId
-            ? Enrollment::query()->where('schoolyear_id', $schoolyearId)->where('status', 'paid')->count()
-            : 0;
-        $badgeCountNoptPaid = $schoolyearId
-            ? Enrollment::query()->where('schoolyear_id', $schoolyearId)->where('status', NULL)->count()
-            : 0;
-        return [
-            'all' => Tab::make(),
-            'unpaid' => Tab::make('Not Fully Paid')
-                ->badgeColor('danger')
-                ->badge($badgeCountNoptPaid)
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', NULL)),
-            'paid' => Tab::make()
-                ->label('Fully Paid')
-                ->badgeColor('success')
-                ->badge($badgeCountPaid)
-                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'paid')),
-        ];
-    }
+    // public function getTabs(): array
+    // {
+    //     return [
+    //         'all' => Tab::make(),
+    //         'unpaid' => Tab::make('Not Fully Paid')
+    //             ->badgeColor('danger')
+    //             ->badge(fn () => $this->getFilteredTableQuery()->clone()->where('status', null)->count())
+    //             ->modifyQueryUsing(fn (Builder $query) => $query->where('status', NULL)),
+    //         'paid' => Tab::make()
+    //             ->label('Fully Paid')
+    //             ->badgeColor('success')
+    //             ->badge(fn () => $this->getFilteredTableQuery()->clone()->where('status', 'paid')->count())
+    //             ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'paid')),
+    //     ];
+    // }
+
+    // #[On('refresh')]
+    // public function getTabs(): array
+    // {
+    //     $schoolyearId = $this->tableFilters['course_filter']['schoolyear_id'] ?? null;
+
+    //     // Get filter values dynamically
+    //     $collegeId = $this->tableFilters['course_filter']['college_id'] ?? null;
+    //     $programId = $this->tableFilters['course_filter']['program_id'] ?? null;
+    //     $yearlevelId = $this->tableFilters['course_filter']['yearlevel_id'] ?? null;
+
+    //     $baseQuery = Enrollment::query();
+
+    //     // Apply filters dynamically
+    //     $baseQuery
+    //         ->when($schoolyearId, fn ($query) => $query->where('schoolyear_id', $schoolyearId))
+    //         ->when($collegeId, fn ($query) => $query->where('college_id', $collegeId))
+    //         ->when($programId, fn ($query) => $query->where('program_id', $programId))
+    //         ->when($yearlevelId, fn ($query) => $query->where('yearlevel_id', $yearlevelId));
+
+    //     return [
+    //         'all' => Tab::make()
+    //             ->label('All')
+    //             ->badgeColor('info')
+    //             ->badge($baseQuery->count()),
+
+    //         'unpaid' => Tab::make('Not Fully Paid')
+    //             ->badgeColor('danger')
+    //             ->badge($baseQuery->clone()->whereNull('status')->count())
+    //             ->modifyQueryUsing(fn (Builder $query) => $query->whereNull('status')),
+
+    //         'paid' => Tab::make('Fully Paid')
+    //             ->badgeColor('success')
+    //             ->badge($baseQuery->clone()->where('status', 'paid')->count())
+    //             ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'paid')),
+    //     ];
+    // }
+
 
     // protected function paginateTableQuery(Builder $query): Paginator
     // {

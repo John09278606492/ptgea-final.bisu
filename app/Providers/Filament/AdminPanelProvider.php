@@ -37,21 +37,22 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             // ->brandLogo(asset('images/ptgea_logo.png'))
-            ->brandLogo(fn () => view('brandname'))
-            ->brandLogoHeight('5rem')
+            // ->brandLogo(fn () => view('brandname'))
+            // ->brandLogoHeight('3rem')
             ->login(Login::class)
             ->favicon(asset('images/bisu_logo.png'))
             ->defaultThemeMode(ThemeMode::Light)
             ->maxContentWidth(MaxWidth::Full)
             ->colors([
-                'cyan' => Color::Cyan,
-                'danger' => Color::Rose,
-                'gray' => Color::Slate,
-                'info' => Color::Blue,
-                'primary' => Color::Indigo,
-                'success' => Color::Emerald,
-                'warning' => Color::Orange,
+                'cyan' => Color::Cyan,         // Stays the same for a neutral/calm tone
+                'danger' => Color::Red,        // Red is more universally recognized for danger
+                'gray' => Color::Zinc,         // Zinc is a more modern gray shade
+                'info' => Color::Sky,          // Sky Blue is softer and fits information purposes
+                'primary' => Color::Indigo,      // Blue is commonly used as a primary action color
+                'success' => Color::Green,     // Green is more recognizable for success than Emerald
+                'warning' => Color::Amber,     // Amber is a stronger warning color than Orange
             ])
+
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([])

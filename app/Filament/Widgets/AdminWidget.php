@@ -12,9 +12,9 @@ class AdminWidget extends BaseWidget
 {
     use InteractsWithPageFilters;
 
-    protected static bool $isLazy = true;
+    // protected static bool $isLazy = true;
 
-    protected static ?string $pollingInterval = null;
+    // protected static ?string $pollingInterval = null;
 
     protected function getStats(): array
     {

@@ -49,7 +49,7 @@ class PaysRelationManager extends RelationManager
                                     $numericBalance = (float) str_replace([',', '₱'], '', $balance);
 
                                     if ($numericBalance <= 0) {
-                                        $fail('Full Paid! Remaining balance is: ₱' . number_format($numericBalance, 2));
+                                        $fail('Fully Paid! Remaining balance is: ₱' . number_format($numericBalance, 2));
                                     }
                                 } else {
                                     $fail('Balance validation failed due to missing method.');

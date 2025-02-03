@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Exports\EnrollmentExporter;
 use App\Filament\Resources\EnrollmentResource\Pages;
 use App\Filament\Resources\EnrollmentResource\RelationManagers;
 use App\Filament\Resources\EnrollmentResource\RelationManagers\PaysRelationManager;
@@ -14,6 +15,9 @@ use App\Models\Semester;
 use App\Models\Yearlevel;
 use App\Models\Yearlevelpayments;
 use Carbon\Carbon;
+use Filament\Actions\ExportAction;
+use Filament\Actions\Exports\Enums\ExportFormat;
+use Filament\Actions\Exports\Models\Export;
 use Filament\Forms;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
@@ -50,7 +54,20 @@ class EnrollmentResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', NULL)->count();
+        return static::getModel()::whereNull('status')->count();
+    }
+
+    public static function getTableQuery()
+    {
+        $enrollments = Enrollment::orderBy('id')->get(); // Ensure proper order
+        $runningBalance = 0;
+
+        // Add a computed column for cumulative balance
+        return $enrollments->map(function ($record) use (&$runningBalance) {
+            $runningBalance += $record->balance;
+            $record->cumulative_balance = $runningBalance; // Attach cumulative balance to model
+            return $record;
+        });
     }
 
     protected static ?string $navigationBadgeTooltip = 'Total number of students not fully paid';
@@ -282,8 +299,9 @@ class EnrollmentResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('balance')
-                    ->label('Balance')
+                    ->label('Remaining Balance')
                     ->badge()
+                    ->money('PHP')
                     ->weight(FontWeight::Bold)
                     ->color(function ($record) {
                         if ($record->balance === 'No Payments') {
@@ -317,23 +335,32 @@ class EnrollmentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('schoolyear_id')
-                    ->label('School Year')
-                    ->relationship('schoolyear', 'schoolyear')
-                    ->default($defaultSchoolYearId ?? 'All')
-                    ->searchable()
-                    ->preload(),
-                Filter::make('created_at')
+                // Filter::make('paid')
+                //     ->query(fn (Builder $query) => $query->where('status', 'paid')),
+
+                // Filter::make('not_paid')
+                //     ->query(fn (Builder $query) => $query->whereNull('status')),
+                Filter::make('course_filter')
                     ->form([
+                        Select::make('schoolyear_id')
+                            ->label('School Year')
+                            ->options(Schoolyear::all()->pluck('schoolyear', 'id'))
+                            ->default($defaultSchoolYearId ?? 'All')
+                            ->searchable()
+                            ->preload()
+                            ->afterStateUpdated(function (Set $set, $state, $livewire) {
+                                $livewire->dispatch('refresh');
+                            }),
                         Select::make('college_id')
                             ->label('College')
                             ->placeholder('All')
                             ->options(College::all()->pluck('college', 'id'))
                             ->preload()
                             ->reactive()
-                            ->afterStateUpdated(function (Set $set) {
+                            ->afterStateUpdated(function (Set $set, $state, $livewire) {
                                 $set('program_id', null);
                                 $set('yearlevel_id', null);
+                                $livewire->dispatch('refresh');
                             })
                             ->searchable(),
                         Select::make('program_id')
@@ -343,8 +370,9 @@ class EnrollmentResource extends Resource
                                 ->where('college_id', $get('college_id'))
                                 ->pluck('program', 'id'))
                             ->reactive()
-                            ->afterStateUpdated(function (Set $set) {
+                            ->afterStateUpdated(function (Set $set, $state, $livewire) {
                                 $set('yearlevel_id', null);
+                                $livewire->dispatch('refresh');
                             })
                             ->preload()
                             ->searchable(),
@@ -356,10 +384,22 @@ class EnrollmentResource extends Resource
                                 ->pluck('yearlevel', 'id'))
                             ->reactive()
                             ->preload()
-                            ->searchable(),
+                            ->searchable()
+                            ->afterStateUpdated(fn($livewire) => $livewire->dispatch('refresh') ),
+                        Select::make('status')
+                            ->label('Status')
+                            ->placeholder('All')
+                            ->options([
+                                'paid' => 'Paid',
+                                'not_paid' => 'Not Paid',
+                            ]),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
+                            ->when(
+                                $data['schoolyear_id'] ?? null,
+                                fn (Builder $query, $schoolyearId) => $query->where('schoolyear_id', $schoolyearId)
+                            )
                             ->when(
                                 $data['college_id'] ?? null,
                                 fn (Builder $query, $collegeId) => $query->where('college_id', $collegeId)
@@ -371,10 +411,21 @@ class EnrollmentResource extends Resource
                             ->when(
                                 $data['yearlevel_id'] ?? null,
                                 fn (Builder $query, $yearlevelId) => $query->where('yearlevel_id', $yearlevelId)
-                            );
+                            )
+                            ->when($data['status'] ?? null, fn (Builder $query, $status) => $query->when($status, function ($query) use ($status) {
+                                // Relate the status select filter to the query
+                                if ($status === 'paid') {
+                                    $query->where('status', 'paid');
+                                } elseif ($status === 'not_paid') {
+                                    $query->whereNull('status');
+                                }
+                            }));
                     })
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
+                        if (! empty($data['schoolyear_id'])) {
+                            $indicators['schoolyear_id'] = 'Schoolyear: '.Schoolyear::find($data['schoolyear_id'])->schoolyear ?? 'N/A';
+                        }
 
                         if (! empty($data['college_id'])) {
                             $indicators['college_id'] = 'College: '.College::find($data['college_id'])->college ?? 'N/A';
@@ -388,12 +439,17 @@ class EnrollmentResource extends Resource
                             $indicators['yearlevel_id'] = 'Year Level: '.Yearlevel::find($data['yearlevel_id'])->yearlevel ?? 'N/A';
                         }
 
+                        if (! empty($data['status'])) {
+                            $statusLabel = $data['status'] === 'paid' ? 'Paid' : 'Not Paid';
+                            $indicators['status'] = 'Status: ' . $statusLabel;
+                        }
+
                         return $indicators;
                     })
-                    ->columns(3)
-                    ->columnSpan(3)
+                    ->columns(5)
+                    ->columnSpan(5)
 
-            ], layout: FiltersLayout::AboveContent)->filtersFormColumns(4)
+            ], layout: FiltersLayout::AboveContent)->filtersFormColumns(5)
             ->deferLoading()
             ->actions([
                 // Tables\Actions\ViewAction::make()
@@ -421,6 +477,10 @@ class EnrollmentResource extends Resource
             //         Tables\Actions\DeleteBulkAction::make(),
             //     ]),
             // ])
+            // ->defaultSort(function (Builder $query) {
+            //     $query->orderBy(['lastname', 'firstname', 'middlename'], 'desc');
+            //     $query->orderBy('created_at', 'desc');
+            // })
             ->emptyStateHeading('No records');
     }
 

@@ -127,7 +127,7 @@ class Enrollment extends Model
 
         $balance = ($collectionsTotal + $yearlevelPaymentsTotal) - $totalAmount;
 
-        return '₱'.number_format($balance, 2);
+        return number_format($balance, 2);
     }
 
     public static function summarizeAmounts(?int $schoolYearId): string
@@ -147,7 +147,7 @@ class Enrollment extends Model
             });
 
         // Format the result as currency
-        return '₱'.number_format($total, 2, '.', ',');
+        return number_format($total, 2, '.', ',');
     }
 
     public static function summarizePaysAmount(?int $schoolYearId): string

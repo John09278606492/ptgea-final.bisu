@@ -21,7 +21,7 @@ class EditStud extends EditRecord
                 ->icon('heroicon-m-arrow-left-circle')
                 ->label('Go back')
                 ->livewireClickHandlerEnabled()
-                ->url(redirect()->back()->getTargetUrl()),
+                ->url($this->previousUrl ?? $this->getResource()::getUrl('index')),
         ];
     }
 
