@@ -6,6 +6,7 @@ use App\Models\Enrollment;
 use App\Models\InvoiceRecord;
 use App\Models\Stud;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\Snappy\Facades\SnappyPdf;
 use Filament\Notifications\Notification;
 
 class InvoiceController extends Controller
@@ -109,4 +110,53 @@ class InvoiceController extends Controller
             return redirect()->back();
         }
     }
+
+    public function exportRecord($id)
+    {
+        // Retrieve all enrollment records that match the schoolyear_id
+        $payments = Enrollment::where('schoolyear_id', $id)->get(); // Use get() to retrieve ALL records
+
+        // Check if any records exist
+        if ($payments->isNotEmpty()) {
+
+            // Generate the PDF with all records using SnappyPdf
+            $pdf = SnappyPdf::loadView('pdf.print_report', ['payments' => $payments]);
+
+            // Stream the PDF to the browser
+            return $pdf->inline();
+        } else {
+            // Notify if no record exists
+            Notification::make()
+                ->title('No invoice record found!')
+                ->danger()
+                ->send();
+
+            return redirect()->back();
+        }
+    }
+
+    public function exportRecordAll()
+    {
+        // Retrieve all enrollment records that match the schoolyear_id
+        $payments = Enrollment::all(); // Use get() to retrieve ALL records
+
+        // Check if any records exist
+        if ($payments->isNotEmpty()) {
+
+            // Generate the PDF with all records using SnappyPdf
+            $pdf = SnappyPdf::loadView('pdf.print_report', ['payments' => $payments]);
+
+            // Stream the PDF to the browser
+            return $pdf->inline();
+        } else {
+            // Notify if no record exists
+            Notification::make()
+                ->title('No invoice record found!')
+                ->danger()
+                ->send();
+
+            return redirect()->back();
+        }
+    }
+
 }

@@ -40,5 +40,12 @@ Route::get('/receipt/{pay}', function (Pay $pay) {
 Route::get('/print-invoice/{id}', [InvoiceController::class, 'printInvoice'])
     ->name('PRINT.INVOICE');
 
+Route::get('/export-records/{id?}', [InvoiceController::class, 'exportRecord'])
+    ->name('EXPORT.RECORDS');
+
+Route::get('/export-records-all', [InvoiceController::class, 'exportRecordAll'])
+    ->name('EXPORT.RECORDS.ALL');
+
+
 Route::get('/download-invoice/{id}', [InvoiceController::class, 'downloadInvoice'])
     ->name('PRINT.INVOICE.DOWNLOAD');

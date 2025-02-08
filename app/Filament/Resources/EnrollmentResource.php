@@ -52,6 +52,20 @@ class EnrollmentResource extends Resource
 
     protected static ?string $navigationLabel = 'Student Payment';
 
+    public $record;
+
+    public $payments;
+
+    public $siblingsInformation;
+
+    public function mount($record)
+    {
+        $this->record = $record;
+        $this->payments = Enrollment::with(['pays', 'stud',
+            'program', 'college', 'schoolyear',
+            'collections', 'yearlevelpayments'])->find($record);
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::whereNull('status')->count();

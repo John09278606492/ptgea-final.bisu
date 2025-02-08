@@ -8,6 +8,7 @@ use App\Filament\Resources\EnrollmentResource;
 use App\Filament\Resources\EnrollmentResource\Widgets\TotalPayableWidget;
 use App\Models\Enrollment;
 use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Actions\ExportAction;
 use Filament\Actions\Exports\Enums\ExportFormat;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
@@ -39,13 +40,25 @@ class ListEnrollments extends ListRecords
                 ->exporter(EnrollmentExporter::class)
                 ->color('success')
                 ->formats([
+                    ExportFormat::Csv,
                     ExportFormat::Xlsx,
                 ])
                 ->columnMapping(false)
                 ->icon('heroicon-m-arrow-down-on-square-stack')
                 ->label('Export')
-                ->modalHeading('Export Student Payment Information')
-                ->fileName(fn (Export $export): string => "student-payment-info-{$export->getKey()}.xlsx")
+                ->modalHeading('Export Student Payment Information'),
+            Action::make('print')
+                ->color('primary')
+                ->icon('heroicon-m-printer')
+                ->label('Export to PDF')
+                ->livewireClickHandlerEnabled()
+                ->url(fn () =>
+                    // Check if `schoolyear_id` exists in the filters. If it does, pass it, otherwise don't pass the id.
+                    $this->tableFilters['course_filter']['schoolyear_id']
+                        ? route('EXPORT.RECORDS', ['id' => $this->tableFilters['course_filter']['schoolyear_id']])
+                        : route('EXPORT.RECORDS.ALL') // No `id` passed if it's null
+                ),
+
         ];
     }
 
