@@ -18,7 +18,7 @@ class Program extends Model
 
     public function college(): BelongsTo
     {
-        return $this->belongsTo(College::class, 'college_id');
+        return $this->belongsTo(College::class);
     }
 
     public function yearlevels(): HasMany
@@ -33,6 +33,6 @@ class Program extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class, 'program_id');
     }
 }

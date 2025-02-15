@@ -63,6 +63,10 @@ class PayResource extends Resource
                         );
                     }
                 ),
+                Tables\Columns\TextColumn::make('enrollment.stud.studentidn')
+                    ->label('Student IDN')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('enrollment.stud.full_name')
                     ->label('Complete Name')
                     ->weight(FontWeight::Bold)
@@ -71,19 +75,18 @@ class PayResource extends Resource
                         'lastname', 'firstname', 'middlename', 'studentidn'
                     ]),
                 Tables\Columns\TextColumn::make('enrollment.college.college')
-                    ->numeric()
+                    ->label('College')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('enrollment.program.program')
-                    ->numeric()
+                    ->label('Program')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('enrollment.yearlevel.yearlevel')
-                    ->numeric()
+                    ->label('Year Level')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('enrollment.schoolyear.schoolyear')
-                    ->numeric()
+                ->label('School Year')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
-                    ->numeric()
                     ->money('PHP')
                     ->summarize(Sum::make()->money('PHP')->label('Total'))
                     ->sortable(),

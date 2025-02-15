@@ -312,13 +312,27 @@ class EnrollmentResource extends Resource
                 Tables\Columns\TextColumn::make('schoolyear.schoolyear')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('balance')
-                    ->label('Remaining Balance')
+                Tables\Columns\TextColumn::make('payments')
+                    ->label('Total Amount Paid')
                     ->badge()
                     ->money('PHP')
                     ->weight(FontWeight::Bold)
                     ->color(function ($record) {
-                        if ($record->balance === 'No Payments') {
+                        if ($record->payments === 'No Payments') {
+                            return 'gray';
+                        }
+                        $paymentsRecord = (float) str_replace(['₱', ','], '', $record->payments);
+                        if ($paymentsRecord > 0) {
+                            return 'success';
+                        }
+                    }),
+                Tables\Columns\TextColumn::make('balance')
+                    ->label('Total Remaining Balance')
+                    ->badge()
+                    ->money('PHP')
+                    ->weight(FontWeight::Bold)
+                    ->color(function ($record) {
+                        if ($record->balance === 'No Fees') {
                             return 'gray';
                         }
                         $balance = (float) str_replace(['₱', ','], '', $record->balance);

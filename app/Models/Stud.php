@@ -21,7 +21,7 @@ class Stud extends Model
 
     public function enrollments(): HasOne
     {
-        return $this->hasOne(Enrollment::class);
+        return $this->hasOne(Enrollment::class, 'stud_id', 'id');
     }
 
     public function siblings(): HasMany
@@ -31,6 +31,6 @@ class Stud extends Model
 
     public function getFullNameAttribute()
     {
-        return $this->lastname.', '.$this->firstname.', '.$this->middlename;
+        return $this->lastname . ', ' . $this->firstname . ', ' . $this->middlename;
     }
 }

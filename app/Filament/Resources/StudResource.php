@@ -324,7 +324,7 @@ class StudResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'active' => 'success',
                         'inactive' => 'danger',
                         'graduated' => 'gray',
@@ -379,9 +379,9 @@ class StudResource extends Resource
                     ->color('warning'),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     // Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ])
             ->emptyStateHeading('No students yet')
             ->emptyStateDescription('Once you add students, it will appear here.');

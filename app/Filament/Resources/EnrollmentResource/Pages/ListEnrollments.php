@@ -36,29 +36,59 @@ class ListEnrollments extends ListRecords
         return [
             Actions\CreateAction::make()
                 ->hidden(),
-            ExportAction::make()
-                ->exporter(EnrollmentExporter::class)
+            // Action::make('export-to-excel')
+            //     ->color('success')
+            //     ->icon('heroicon-m-arrow-down-on-square-stack')
+            //     ->label('Export to EXCEL')
+            //     ->livewireClickHandlerEnabled()
+            //     ->url(function () {
+            //         $schoolYearId = $this->tableFilters['course_filter']['schoolyear_id'] ?? null;
+
+            //         // Handle cases where schoolYearId is empty, a string, or an array
+            //         if ($schoolYearId === null || $schoolYearId === "" || $schoolYearId === []) {
+            //             return route('ALL.STUDENT.PAYMENT');
+            //         } else {
+            //             return route('EXPORT.STUDENT.PAYMENT', ['id' => (int) $schoolYearId]);
+            //         }
+            //     }),
+            Action::make('export-to-excel')
                 ->color('success')
-                ->formats([
-                    ExportFormat::Csv,
-                    ExportFormat::Xlsx,
-                ])
-                ->columnMapping(false)
-                ->icon('heroicon-m-arrow-down-on-square-stack')
-                ->label('Export')
-                ->modalHeading('Export Student Payment Information'),
-            Action::make('print')
-                ->color('primary')
+                ->icon('heroicon-m-printer')
+                ->label('Export to EXCEL')
+                ->livewireClickHandlerEnabled()
+                ->url(function () {
+                    $filters = $this->tableFilters['course_filter'] ?? [];
+
+                    return route('EXPORT.STUDENT.PAYMENT', array_filter([
+                        'schoolyear_id' => $filters['schoolyear_id'] ?? null,
+                        'college_id' => $filters['college_id'] ?? null,
+                        'program_id' => $filters['program_id'] ?? null,
+                        'yearlevel_id' => $filters['yearlevel_id'] ?? null,
+                        'status' => $filters['status'] ?? null,
+                    ]));
+                }),
+            Action::make('export-to-pdf')
+                ->color('danger')
                 ->icon('heroicon-m-printer')
                 ->label('Export to PDF')
                 ->livewireClickHandlerEnabled()
-                ->url(fn () =>
-                    // Check if `schoolyear_id` exists in the filters. If it does, pass it, otherwise don't pass the id.
-                    $this->tableFilters['course_filter']['schoolyear_id']
-                        ? route('EXPORT.RECORDS', ['id' => $this->tableFilters['course_filter']['schoolyear_id']])
-                        : route('EXPORT.RECORDS.ALL') // No `id` passed if it's null
-                ),
+                ->url(function () {
+                    $filters = $this->tableFilters['course_filter'] ?? [];
 
+                    return route('EXPORT.RECORDS', array_filter([
+                        'schoolyear_id' => $filters['schoolyear_id'] ?? null,
+                        'college_id' => $filters['college_id'] ?? null,
+                        'program_id' => $filters['program_id'] ?? null,
+                        'yearlevel_id' => $filters['yearlevel_id'] ?? null,
+                        'status' => $filters['status'] ?? null,
+                    ]));
+                }),
+            // ->url(fn () =>
+            //     // Check if `schoolyear_id` exists in the filters. If it does, pass it, otherwise don't pass the id.
+            //     $this->tableFilters['course_filter']['schoolyear_id']
+            //         ? route('EXPORT.RECORDS', ['id' => $this->tableFilters['course_filter']['schoolyear_id']])
+            //         : route('EXPORT.RECORDS.ALL') // No `id` passed if it's null
+            // ),
         ];
     }
 

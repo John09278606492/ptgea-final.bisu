@@ -26,6 +26,6 @@ class College extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class, 'college_id');
     }
 }

@@ -33,7 +33,7 @@ class Yearlevelpayments extends Model
 
     public function enrollments(): BelongsToMany
     {
-        return $this->belongsToMany(Enrollment::class)
+        return $this->belongsToMany(Enrollment::class, 'enrollment_yearlevelpayments')
             ->withTimestamps();
     }
 }

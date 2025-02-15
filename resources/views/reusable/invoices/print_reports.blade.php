@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student's Payment Information</title>
+    <title>Students' Payment Information</title>
 </head>
 <body style="font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #333; padding: 0.5rem; background-color: #fff;">
 
@@ -25,13 +25,13 @@
             <h3 style="margin: 0;">Republic of the Philippines</h3>
             <h3 style="margin: 0;">BOHOL ISLAND STATE UNIVERSITY</h3>
             <h3 style="margin: 0;">San Isidro, Calape, Bohol</h3>
-            <h4 style="margin: 0;">Department of Computer Science</h4>
+            <h4 style="margin: 0;">Parents Teachers Guardians & Employees Association</h4>
             <p style="margin: 0;">Balance | Integrity | Stewardship | Uprightness</p>
         </div>
 
         <!-- Right Logo -->
         <div style="float: left; width: 23%; text-align: center;">
-            <img src="{{ asset('images/bisu logo2.png') }}" alt="BISU Logo" style="height: 6rem;">
+            <img src="{{ asset('images/bagong_pilipinas.png') }}" alt="BISU Logo" style="height: 6rem;">
         </div>
         <div style="float: left; width: 23%; text-align: center;">
             <img src="{{ asset('images/tuv logo.png') }}" alt="BISU Logo" style="height: 6rem;">
@@ -53,7 +53,9 @@
                     <th style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">College</th>
                     <th style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">Program</th>
                     <th style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">Year Level</th>
-                    <th style="padding: 0.25rem; border: 1px solid #ccc; text-align: right;">Remaining Balance</th>
+                    <th style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">School Year</th>
+                    <th style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">Total Amount Paid</th>
+                    <th style="padding: 0.25rem; border: 1px solid #ccc; text-align: right;">Total Remaining Balance</th>
                 </tr>
             </thead>
             <tbody>
@@ -67,14 +69,27 @@
                         <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">{{ optional($studentInfo->college)->college }}</td>
                         <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">{{ optional($studentInfo->program)->program }}</td>
                         <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">{{ optional($studentInfo->yearlevel)->yearlevel }}</td>
-                        <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: right;">₱{{ number_format(optional($studentInfo)->balance ?? 0, 2) }}</td>
+                        <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: left;">{{ optional($studentInfo->schoolyear)->schoolyear }}</td>
+                        <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: right;">₱{{ is_numeric($studentInfo->payments) ? (float)$studentInfo->payments : 0; }}</td>
+                        <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: right;">₱{{ is_numeric($studentInfo->balance) ? (float)$studentInfo->balance : 0; }}</td>
                     </tr>
                 @endforeach
+
+                <!-- Summary rows -->
+                <tr>
+                    <td colspan="8" style="border: none;"></td>
+                    <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: right; font-weight: bold;">Grand Total:</td>
+                    <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: right; font-weight: bold;">₱{{ number_format($totalPays, 2) }}</td>
+                    <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: right; font-weight: bold;">₱{{ number_format($remainingBalance, 2) }}</td>
+                </tr>
+                <!-- Overall Total Expected Amount -->
+                <tr>
+                    <td colspan="8" style="border: none;"></td>
+                    <td style="padding: 0.25rem; border: 1px solid #ccc; text-align: right; font-weight: bold;">Overall Total Expected Amount:</td>
+                    <td colspan="2" style="padding: 0.25rem; border: 1px solid #ccc; text-align: right; font-weight: bold;">₱{{ number_format($totalPays + $remainingBalance, 2) }}</td>
+                </tr>
             </tbody>
         </table>
-
-        <div style="text-align: right; font-size: 12px; font-weight: bold; margin-top: 1rem;">Total Paid: ₱{{ number_format($totalPays, 2) }}</div>
-        <div style="text-align: right; font-size: 14px; font-weight: bold;">Remaining Balance: ₱{{ number_format($remainingBalance, 2) }}</div>
     </div>
 </body>
 </html>

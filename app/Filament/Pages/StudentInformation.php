@@ -12,28 +12,23 @@ use Filament\Pages\Page;
 class StudentInformation extends Page
 {
     public $activeTab = 'student info';
-
     public $studentIDN;
-
-    public $studentInfo = null;  // Initialize as null to prevent unexpected errors
-
+    public $studentInfo = null;
     public $sibling_id;
-
     public $finalSib;
-
     public $defaultSchoolYearId;
-
     public $today;
-
     public $enrollmentId;
-
-    public $searchStudent = '';  // Property for searching students
-
+    public $searchStudent = '';
     public $students = [];
+    public $selectedSchoolYear;
+    public $schoolYears = [];
+    public $payments = null;
+    public $siblingsInformation = null;
+    public $studentSchoolyear = null;
 
-    public $payments = null;  // Initialize as null
-
-    public $siblingsInformation = null;  // Initialize as null
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string $view = 'filament.pages.student-information';
 
     public static function shouldRegisterNavigation(): bool
     {
@@ -48,65 +43,133 @@ class StudentInformation extends Page
     public function mount()
     {
         $this->studentIDN = auth()->user()->canId ?? null;
+        if (!$this->studentIDN) return;
 
-        if (! $this->studentIDN) {
-            return; // Exit early if no student IDN is found
-        }
+        $this->schoolYears = Schoolyear::whereHas('enrollments', function ($query) {
+            $query->where('stud_id', Stud::where('studentidn', $this->studentIDN)->value('id'));  // Filter by student ID
+        })->get();
 
         $this->today = Carbon::today();
+
+        // 🔹 Set default school year (based on the current date)
         $this->defaultSchoolYearId = Schoolyear::where('startDate', '<=', $this->today)
             ->where('endDate', '>=', $this->today)
             ->value('id');
 
-        if (! $this->defaultSchoolYearId) {
-            return; // Exit early if no matching school year is found
+        // If there's no active school year, use the latest one available
+        if (!$this->defaultSchoolYearId) {
+            $this->defaultSchoolYearId = Schoolyear::latest('startDate')->value('id');
         }
 
-        $this->studentInfo = Stud::with(['siblings'])
-            ->where('studentidn', $this->studentIDN)
-            ->first();
+        // Set selected school year to default
+        $this->selectedSchoolYear = $this->defaultSchoolYearId;
 
-        if (! $this->studentInfo) {
-            return; // Exit early if no student info is found
-        }
+        // 🔹 Load student data based on the default school year
+        $this->loadStudentData();
+    }
 
-        $this->enrollmentId = Enrollment::where('stud_id', $this->studentInfo->id)
-            ->where('schoolyear_id', $this->defaultSchoolYearId)
-            ->value('id');
+    // Trigger when the selected school year is updated
+    public function updatedSelectedSchoolYear($value)
+    {
+        // Update the school year ID and re-fetch the relevant data
+        $this->defaultSchoolYearId = $value;
 
-        if (! $this->enrollmentId) {
-            return; // Exit early if no enrollment record is found
-        }
+        // Re-fetch the necessary data (e.g., payments, invoice, etc.)
+        $this->loadStudentData();
+    }
 
-        $this->payments = Enrollment::with([
+    private function loadStudentData()
+    {
+        if (!$this->studentIDN) return;
+
+        // Fetch the student's information
+        $this->studentInfo = Stud::with('siblings')->where('studentidn', $this->studentIDN)->first();
+        if (!$this->studentInfo) return;
+
+        $this->studentSchoolyear = Enrollment::with([
             'pays',
             'stud',
             'program',
             'college',
             'schoolyear',
             'collections',
+            'yearlevel',
             'yearlevelpayments',
-        ])->find($this->enrollmentId);
-
-        if (! $this->payments) {
-            return; // Exit early if no payment data is found
-        }
-
-        $this->siblingsInformation = Sibling::where('stud_id', $this->payments->stud_id)->value('sibling_id');
-
-        $this->finalSib = Enrollment::with(['stud']) // Include the stud relationship
-            ->where('stud_id', $this->siblingsInformation)
-            ->where('schoolyear_id', $this->defaultSchoolYearId)
+        ])
+            ->where('stud_id', $this->studentInfo->id)
             ->get();
 
-        // $this->siblingsInformation = Stud::with(['siblings' => function ($query) {
-        //     $query->whereHas('stud.enrollments', function ($enrollmentQuery) {
-        //         $enrollmentQuery->where('schoolyear_id', $this->payments->schoolyear_id);
-        //     });
-        // }])->find($this->payments->stud_id);
+        if ($this->selectedSchoolYear === 'all') {
+            // Retrieve all enrollments associated with this student
+            $this->payments = Enrollment::with([
+                'pays',
+                'stud',
+                'program',
+                'college',
+                'schoolyear',
+                'collections',
+                'yearlevel',
+                'yearlevelpayments',
+            ])
+                ->where('stud_id', $this->studentInfo->id)
+                ->get();
+        } else {
+            // Retrieve enrollments for a specific school year
+            $this->enrollmentId = Enrollment::where('stud_id', $this->studentInfo->id)
+                ->where('schoolyear_id', $this->defaultSchoolYearId)
+                ->value('id');
+
+            if (!$this->enrollmentId) return;
+
+            $this->payments = Enrollment::with([
+                'pays',
+                'stud',
+                'program',
+                'college',
+                'schoolyear',
+                'collections',
+                'yearlevel',
+                'yearlevelpayments',
+            ])->where('id', $this->enrollmentId)->get();
+        }
     }
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.pages.student-information';
+    // // Your existing method to load the student data, including invoice and payments
+    // private function loadStudentData()
+    // {
+    //     if (!$this->defaultSchoolYearId) return;
+
+    //     // Fetch the student's information
+    //     $this->studentInfo = Stud::with('siblings')->where('studentidn', $this->studentIDN)->first();
+    //     if (!$this->studentInfo) return;
+
+    //     // Get the enrollment ID based on the selected school year
+    //     $this->enrollmentId = Enrollment::where('stud_id', $this->studentInfo->id)
+    //         ->where('schoolyear_id', $this->defaultSchoolYearId)
+    //         ->value('id');
+
+    //     if (!$this->enrollmentId) return;
+
+    //     // Fetch the payment details for the selected school year
+    //     $this->payments = Enrollment::with([
+    //         'pays',
+    //         'stud',
+    //         'program',
+    //         'college',
+    //         'schoolyear',
+    //         'collections',
+    //         'yearlevel',
+    //         'yearlevelpayments',
+    //     ])->find($this->enrollmentId);
+
+    //     if (!$this->payments) return;
+
+    //     // Fetch siblings and related data for the selected school year
+    //     $this->siblingsInformation = Sibling::where('stud_id', $this->payments->stud_id)->value('sibling_id');
+    //     $this->finalSib = Enrollment::with(['stud'])
+    //         ->where('stud_id', $this->siblingsInformation)
+    //         ->where('schoolyear_id', $this->defaultSchoolYearId)
+    //         ->get();
+    // }
 }

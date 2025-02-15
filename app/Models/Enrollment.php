@@ -67,14 +67,14 @@ class Enrollment extends Model
     public function getFormattedCollectionsAttribute(): array
     {
         return $this->collections->map(function ($collection) {
-            return '₱'.number_format($collection->amount, 2).' - '.$collection->description;
+            return '₱' . number_format($collection->amount, 2) . ' - ' . $collection->description;
         })->toArray();
     }
 
     public function getFormattedYearlevelPaymentsAttribute(): array
     {
         return $this->yearlevelpayments->map(function ($payment) {
-            return '₱'.number_format($payment->amount, 2).' - '.$payment->description;
+            return '₱' . number_format($payment->amount, 2) . ' - ' . $payment->description;
         })->toArray();
     }
 
@@ -85,7 +85,7 @@ class Enrollment extends Model
 
         $total = $collectionsTotal + $yearlevelPaymentsTotal;
 
-        return '₱'.number_format($total, 2, '.', ',');
+        return '₱' . number_format($total, 2, '.', ',');
     }
 
     public function totalPaymentsAttribute(): string
@@ -95,12 +95,12 @@ class Enrollment extends Model
 
         $total = $collectionsTotal + $yearlevelPaymentsTotal;
 
-        return '₱'.number_format($total, 2, '.', ',');
+        return '₱' . number_format($total, 2, '.', ',');
     }
 
     public function getAmountWithDescriptionAttribute(): string
     {
-        return '₱'.number_format($this->amount, 2, '.', ',').' - '.$this->description;
+        return '₱' . number_format($this->amount, 2, '.', ',') . ' - ' . $this->description;
     }
 
     public function pays(): HasMany
@@ -112,7 +112,7 @@ class Enrollment extends Model
     {
         $totalAmount = $this->pays->sum('amount');
 
-        return '₱'.number_format($totalAmount, 2);
+        return '₱' . number_format($totalAmount, 2);
     }
 
     public function getBalanceAttribute(): string
@@ -122,12 +122,23 @@ class Enrollment extends Model
         $totalAmount = $this->pays->sum('amount');
 
         if ($collectionsTotal == 0 && $yearlevelPaymentsTotal == 0) {
-            return 'No Payments';
+            return 'No Fees';
         }
 
         $balance = ($collectionsTotal + $yearlevelPaymentsTotal) - $totalAmount;
 
         return number_format($balance, 2);
+    }
+
+    public function getPaymentsAttribute(): string
+    {
+        $collectionsTotal = $this->pays()->sum('amount');
+
+        if ($collectionsTotal == 0) {
+            return 'No Payments';
+        }
+
+        return number_format($collectionsTotal, 2);
     }
 
     public static function summarizeAmounts(?int $schoolYearId): string
@@ -163,7 +174,7 @@ class Enrollment extends Model
                 return $enrollment->pays->sum('amount');
             });
 
-        return '₱'.number_format($total, 2, '.', ',');
+        return '₱' . number_format($total, 2, '.', ',');
     }
 
     public static function summarizeBalance(?int $schoolYearId): string
@@ -187,7 +198,7 @@ class Enrollment extends Model
                 return $balance;
             });
 
-        return '₱'.number_format($totalBalance, 2, '.', ',');
+        return '₱' . number_format($totalBalance, 2, '.', ',');
     }
 
     public static function countBySchoolYear(?int $schoolYearId): int

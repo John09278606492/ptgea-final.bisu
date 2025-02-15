@@ -174,8 +174,10 @@
         <div class="p-4 mb-6">
             <div class="flex justify-end">
                 <div class="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700">
-                    <h2 class="text-2xl font-bold text-right dark:text-gray-100">Remaining Balance: ₱{{ number_format($remainingBalance, 2) }}</h2>
-                </div>
+                <h2 class="text-2xl font-bold text-right" style="color: {{ $remainingBalance == 0 ? 'green' : 'red' }};">
+                    Remaining Balance: ₱{{ number_format($remainingBalance, 2) }}
+                </h2>
+            </div>
             </div>
         </div>
     </div>

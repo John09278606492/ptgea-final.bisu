@@ -4,13 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Enrollment;
 use App\Models\InvoiceRecord;
+use App\Models\Pay;
 use App\Models\Stud;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\Snappy\Facades\SnappyPdf;
 use Filament\Notifications\Notification;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
+    public $payments;
+    public $studentInfo;
+
     /**
      * Print the invoice
      *
@@ -63,43 +70,54 @@ class InvoiceController extends Controller
         }
     }
 
-    public function downloadInvoice($id)
+    /**
+     * Print the invoice
+     *
+     * @param  int $id
+     * @param  $schoolYear
+     */
+    public function downloadInvoice($id, $schoolYear)
     {
-        // Retrieve the enrollment record with relationships
-        $payments = Enrollment::with([
+        // dd($id, $schoolYear);
+        // Fetch the student's information
+        $this->studentInfo = Enrollment::where('id', $id)->first();
+        if (!$this->studentInfo) return;
+
+        // Query enrollments based on the selected school year
+        $query = Enrollment::with([
             'pays',
             'stud',
             'program',
             'college',
             'schoolyear',
             'collections',
+            'yearlevel',
             'yearlevelpayments',
-        ])->find($id);
+        ])->where('stud_id', $this->studentInfo->stud_id);
 
-        // Check if the record exists
-        if ($payments) {
+        if ($schoolYear !== 'all') {
+            $query->where('schoolyear_id', $schoolYear); // Filter by school year
+        }
+
+        $this->payments = $query->get();
+
+        // Check if records exist
+        if ($this->payments->isNotEmpty()) {
             // Log the invoice generation
             InvoiceRecord::create([
                 'user_id' => auth()->user()->id,
                 'pay_id' => $id,
             ]);
 
-            // Fetch sibling information
-            $siblingsInformation = Stud::with(['siblings' => function ($query) use ($payments) {
-                $query->whereHas('stud.enrollments', function ($enrollmentQuery) use ($payments) {
-                    $enrollmentQuery->where('schoolyear_id', $payments->schoolyear_id);
-                });
-            }])->find($payments->stud_id);
-
             // Define custom paper size (e.g., 5x5 inches)
             $customPaper = [0, 0, 300, 600];
 
             // Generate the PDF with a custom paper size
-            $pdf = Pdf::loadView('pdf.print_invoice', compact('payments', 'siblingsInformation'))
+            $pdf = Pdf::loadView('pdf.new_print_invoices', ['payments' => $this->payments])
                 ->setPaper($customPaper);
 
             // Download the PDF instead of streaming
-            return $pdf->download('invoice_'.$id.'.pdf');
+            return $pdf->stream('invoice_' . $id . '.pdf');
         } else {
             // Notify if no record exists
             Notification::make()
@@ -111,10 +129,44 @@ class InvoiceController extends Controller
         }
     }
 
-    public function exportRecord($id)
+
+    public function exportRecord(Request $request)
     {
-        // Retrieve all enrollment records that match the schoolyear_id
-        $payments = Enrollment::where('schoolyear_id', $id)->get(); // Use get() to retrieve ALL records
+        $schoolyear_id = $request->input('schoolyear_id');
+        $college_id = $request->input('college_id');
+        $program_id = $request->input('program_id');
+        $yearlevel_id = $request->input('yearlevel_id');
+        $status = $request->input('status');
+
+        // Start with a base query
+        $query = Enrollment::query();
+
+        // Add filters conditionally
+        if ($schoolyear_id) {
+            $query->where('schoolyear_id', $schoolyear_id);
+        }
+
+        if ($college_id) {
+            $query->where('college_id', $college_id);
+        }
+
+        if ($program_id) {
+            $query->where('program_id', $program_id);
+        }
+
+        if ($yearlevel_id) {
+            $query->where('yearlevel_id', $yearlevel_id);
+        }
+
+        // Handle status filtering
+        if ($status === 'paid') {
+            $query->where('status', 'paid');
+        } elseif ($status === 'not_paid') {
+            $query->whereNull('status');
+        }
+
+        // Get the results
+        $payments = $query->get(); // Use get() to retrieve ALL records
 
         // Check if any records exist
         if ($payments->isNotEmpty()) {
@@ -123,7 +175,7 @@ class InvoiceController extends Controller
             $pdf = SnappyPdf::loadView('pdf.print_report', ['payments' => $payments]);
 
             // Stream the PDF to the browser
-            return $pdf->inline();
+            return $pdf->download('Student-Payment&Balance-Record-Export.pdf');
         } else {
             // Notify if no record exists
             Notification::make()
@@ -134,6 +186,60 @@ class InvoiceController extends Controller
             return redirect()->back();
         }
     }
+
+    public function exportRecordtoPdf(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
+        $date_from = null;
+        $date_to = null;
+
+        // Ensure both startDate and endDate are provided
+        if (!empty($startDate) && !empty($endDate)) {
+            try {
+                // Check if the format is already Y-m-d
+                $date_from = \Carbon\Carbon::parse(trim($startDate))->startOfDay();
+                $date_to = \Carbon\Carbon::parse(trim($endDate))->endOfDay();
+            } catch (\Exception $e) {
+                Log::error('Invalid date format: ' . $startDate . ' - ' . $endDate);
+                return redirect()->back()->withErrors(['error' => 'Invalid date format.']);
+            }
+        }
+
+        // Start with a base query
+        $query = Pay::query();
+
+        // Apply date filter if both dates are valid
+        if ($date_from && $date_to) {
+            $query->whereBetween('created_at', [$date_from, $date_to]);
+        }
+
+        // Get the results
+        $payments = $query->get();
+
+        // Check if any records exist
+        if ($payments->isNotEmpty()) {
+            $pdf = SnappyPdf::loadView(
+                'pdf.print_payment_records',
+                [
+                    'payments' => $payments,
+                    'date_from' => $date_from->format('M d, Y'),
+                    'date_to' => $date_to->format('M d, Y'),
+                ]
+            );
+
+            return $pdf->download('Student-Payment-Record-Export.pdf');
+        } else {
+            Notification::make()
+                ->title('No invoice record found!')
+                ->danger()
+                ->send();
+
+            return redirect()->back();
+        }
+    }
+
 
     public function exportRecordAll()
     {
@@ -158,5 +264,4 @@ class InvoiceController extends Controller
             return redirect()->back();
         }
     }
-
 }

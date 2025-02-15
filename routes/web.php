@@ -1,7 +1,10 @@
 <?php
 
 use App\Filament\Pages\StudentInformation;
+use App\Http\Controllers\AllExportController;
+use App\Http\Controllers\Exportstudentpayment;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PaymentController;
 use App\Models\Pay;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
@@ -28,7 +31,7 @@ Route::get('/student-information', StudentInformation::class)->name('student_inf
 Route::get('/receipt/{pay}', function (Pay $pay) {
     $receiptData = [
         'id' => $pay->id,
-        'amount_formatted' => 'PHP'.number_format($pay->amount, 2),
+        'amount_formatted' => 'PHP' . number_format($pay->amount, 2),
         'status' => $pay->status,
         'date' => $pay->created_at->format('M. d, Y g:i a'),
         'student' => $pay->enrollment->stud->only(['id', 'lastname', 'firstname', 'middlename']),
@@ -40,12 +43,29 @@ Route::get('/receipt/{pay}', function (Pay $pay) {
 Route::get('/print-invoice/{id}', [InvoiceController::class, 'printInvoice'])
     ->name('PRINT.INVOICE');
 
-Route::get('/export-records/{id?}', [InvoiceController::class, 'exportRecord'])
+// Route::get('/export-records/{id?}', [InvoiceController::class, 'exportRecord'])
+//     ->name('EXPORT.RECORDS');
+
+Route::get('/export-records', [InvoiceController::class, 'exportRecord'])
     ->name('EXPORT.RECORDS');
+
+Route::get('/export-records-pdf', [InvoiceController::class, 'exportRecordtoPdf'])
+    ->name('EXPORT.PAYMENT.RECORDS.PDF');
+
+Route::get('/export-payment-records', [Exportstudentpayment::class, 'exportPaymentRecord'])
+    ->name('EXPORT.PAYMENT.RECORDS');
 
 Route::get('/export-records-all', [InvoiceController::class, 'exportRecordAll'])
     ->name('EXPORT.RECORDS.ALL');
 
-
-Route::get('/download-invoice/{id}', [InvoiceController::class, 'downloadInvoice'])
+Route::get('/download-invoice/{id}/{schoolYear}', [InvoiceController::class, 'downloadInvoice'])
     ->name('PRINT.INVOICE.DOWNLOAD');
+
+Route::get('/students-export', [Exportstudentpayment::class, 'export'])
+    ->name('EXPORT.STUDENT.PAYMENT');
+
+Route::get('/students-export-payment/{college_id?}/{program_id?}/{yearlevel_id?}/{status?}',        [AllExportController::class, 'allStudentExport'])
+    ->name('ALL.STUDENT.PAYMENT');
+
+Route::get('/students-payments-records', [PaymentController::class, 'export'])
+    ->name('EXPORT.STUDENT.PAYMENT.RECORD');

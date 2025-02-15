@@ -40,7 +40,7 @@ class Yearlevel extends Model
     {
         // Get formatted individual amounts with descriptions
         return $this->yearlevelpayments->map(function ($payment) {
-            return '₱'.number_format($payment->amount, 2).' - '.$payment->description;
+            return '₱' . number_format($payment->amount, 2) . ' - ' . $payment->description;
         })->toArray();
     }
 
@@ -51,6 +51,11 @@ class Yearlevel extends Model
 
     public function enrollments(): HasMany
     {
-        return $this->hasMany(Enrollment::class);
+        return $this->hasMany(Enrollment::class, 'yearlevel_id');
+    }
+
+    public function enrollmentForThisYearLevel()
+    {
+        return $this->hasOne(Enrollment::class, 'yearlevel_id');
     }
 }
