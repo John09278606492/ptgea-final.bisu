@@ -39,10 +39,10 @@ class InvoiceController extends Controller
         // Check if the record exists
         if ($payments) {
             // Log the invoice generation
-            InvoiceRecord::create([
-                'user_id' => auth()->user()->id,
-                'pay_id' => $id,
-            ]);
+            // InvoiceRecord::create([
+            //     'user_id' => auth()->user()->id,
+            //     'pay_id' => $id,
+            // ]);
 
             // Fetch sibling information
             $siblingsInformation = Stud::with(['siblings' => function ($query) use ($payments) {
@@ -104,16 +104,16 @@ class InvoiceController extends Controller
         // Check if records exist
         if ($this->payments->isNotEmpty()) {
             // Log the invoice generation
-            InvoiceRecord::create([
-                'user_id' => auth()->user()->id,
-                'pay_id' => $id,
-            ]);
+            // InvoiceRecord::create([
+            //     'user_id' => auth()->user()->id,
+            //     'pay_id' => $id,
+            // ]);
 
             // Define custom paper size (e.g., 5x5 inches)
             $customPaper = [0, 0, 300, 600];
 
             // Generate the PDF with a custom paper size
-            $pdf = Pdf::loadView('pdf.new_print_invoices', ['payments' => $this->payments])
+            $pdf = Pdf::load('pdf.new_print_invoices', ['payments' => $this->payments])
                 ->setPaper($customPaper);
 
             // Download the PDF instead of streaming
@@ -172,6 +172,7 @@ class InvoiceController extends Controller
         if ($payments->isNotEmpty()) {
 
             // Generate the PDF with all records using SnappyPdf
+
             $pdf = SnappyPdf::loadView('pdf.print_report', ['payments' => $payments]);
 
             // Stream the PDF to the browser

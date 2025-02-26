@@ -15,6 +15,10 @@ use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
 use Illuminate\Support\Facades\DB;
+use Filament\Notifications\Notification;
+use Filament\Notifications\Actions\Action;
+use Filament\Actions\Imports\Exceptions;
+use Illuminate\Support\HtmlString;
 
 class EnrollmentImporter extends Importer
 {
@@ -46,7 +50,7 @@ class EnrollmentImporter extends Importer
                         ->where('studentidn', $state)
                         ->first();
                 })
-                ->rules(['required', 'filled', 'present']),
+                ->rules(['required']),
             ImportColumn::make('college')
                 ->label('College')
                 ->exampleHeader('College')
@@ -56,7 +60,7 @@ class EnrollmentImporter extends Importer
                         ->where('college', $state)
                         ->first();
                 })
-                ->rules(['required']),
+                ->rules(['required', 'regex:/^[^0-9]*$/']),
             ImportColumn::make('program')
                 ->label('Program')
                 ->exampleHeader('Program')
@@ -66,7 +70,7 @@ class EnrollmentImporter extends Importer
                         ->where('program', $state)
                         ->first();
                 })
-                ->rules(['required']),
+                ->rules(['required', 'regex:/^[^0-9]*$/']),
             ImportColumn::make('yearlevel')
                 ->label('Year Level')
                 ->exampleHeader('Year Level')
@@ -84,7 +88,7 @@ class EnrollmentImporter extends Importer
 
                     return null;
                 })
-                ->rules(['required']),
+                ->rules(['required', 'numeric']),
             ImportColumn::make('schoolyear')
                 ->label('School Year')
                 ->exampleHeader('School Year')
@@ -94,7 +98,23 @@ class EnrollmentImporter extends Importer
                         ->where('schoolyear', $state)
                         ->first();
                 })
-                ->rules(['required', 'filled', 'present']),
+                ->rules([
+                    'required',
+                    'regex:/^\d{4} - \d{4}$/',
+                    function ($attribute, $value, $fail) {
+                        // Extract years
+                        [$firstYear, $secondYear] = explode(' - ', $value);
+
+                        // Convert to integers
+                        $firstYear = (int) $firstYear;
+                        $secondYear = (int) $secondYear;
+
+                        // Validate second year is greater than or equal to first year
+                        if ($secondYear < $firstYear) {
+                            $fail("The second year ({$secondYear}) must be greater than or equal to the first year ({$firstYear}).");
+                        }
+                    },
+                ]),
             ImportColumn::make('status')
                 ->label('Status')
                 ->exampleHeader('Status')
@@ -102,6 +122,16 @@ class EnrollmentImporter extends Importer
                 ->rules(['max:255']),
         ];
     }
+
+    public function getValidationMessages(): array
+    {
+        return [
+            'college.regex' => 'The College field must contain only letters, dashes and spaces.',
+            'program.regex' => 'The Program field must contain only letters, dashes and spaces.',
+            'yearlevel.numeric' => 'Yearlevel must be a numeric value.',
+        ];
+    }
+
 
     private function loadLookups(): void
     {
@@ -297,12 +327,52 @@ class EnrollmentImporter extends Importer
     //     return $enrollment;
     // }
 
+    // public static function getCompletedNotificationBody(Import $import): string
+    // {
+    //     $recipient = auth()->user();
+    //     $body = 'Your enrollment import has completed and ' . number_format($import->successful_rows) . ' ' . str('row')->plural($import->successful_rows) . ' imported.';
+
+    //     if ($failedRowsCount = $import->getFailedRowsCount()) {
+    //         $body .= ' ' . number_format($failedRowsCount) . ' ' . str('row')->plural($failedRowsCount) . ' failed to import.';
+    //         Notification::make()
+    //             ->title('Enrollment Import')
+    //             ->body($body)
+    //             ->danger()
+    //             ->sendToDatabase($recipient);
+    //     }
+    //     // } else {
+    //     //     Notification::make()
+    //     //         ->title('Enrollment Import')
+    //     //         ->body($body)
+    //     //         ->success()
+    //     //         ->sendToDatabase($recipient);
+    //     // }
+
+    //     return $body;
+    // }
     public static function getCompletedNotificationBody(Import $import): string
     {
-        $body = 'Your enrollment import has completed and '.number_format($import->successful_rows).' '.str('row')->plural($import->successful_rows).' imported.';
+        $recipient = auth()->user();
 
+        // Base message
+        $body = 'Your enrollment import has completed and ' . number_format($import->successful_rows) . ' ' . str('row')->plural($import->successful_rows) . ' imported.';
+
+        // Check for failed rows
         if ($failedRowsCount = $import->getFailedRowsCount()) {
-            $body .= ' '.number_format($failedRowsCount).' '.str('row')->plural($failedRowsCount).' failed to import.';
+            $downloadUrl = url("/filament/imports/{$import->id}/failed-rows/download");
+
+            $body .= ' ' . number_format($failedRowsCount) . ' ' . str('row')->plural($failedRowsCount) . ' failed to import.';
+
+            // Styled download link with independent hover underline effect
+            $downloadLink = '<a href="' . $downloadUrl . '" target="_blank" class="text-sm font-semibold text-danger-600 dark:text-danger-400 hover:underline">
+                            Download information about the failed row
+                         </a>';
+
+            Notification::make()
+                ->title('Import completed')
+                ->body(new HtmlString($body . '<br>' . $downloadLink))
+                ->danger()
+                ->sendToDatabase($recipient);
         }
 
         return $body;

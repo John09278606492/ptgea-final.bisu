@@ -109,7 +109,9 @@
             </tbody>
         </table>
         <div style="text-align: right; font-weight: bold; margin-top: 5px;">Total Amount Paid: ₱{{ number_format($totalPays, 2) }}</div>
-        <div style="text-align: right; font-weight: bold; margin-top: 5px; font-size: 16px; color: red;">Remaining Balance: ₱{{ number_format($remainingBalance, 2) }}</div>
+        <div style="text-align: right; font-weight: bold; margin-top: 5px; font-size: 16px; color: {{ $remainingBalance > 0 ? 'red' : 'green' }};">
+            Remaining Balance: ₱{{ number_format($remainingBalance, 2) }}
+        </div>
     </div>
 </div>
 

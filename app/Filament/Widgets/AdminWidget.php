@@ -119,7 +119,7 @@ class AdminWidget extends BaseWidget
                 return $totalPayments; // Calculate balance
             });
 
-        return '₱'.number_format($totalAmount, 2, '.', ',');
+        return '₱' . number_format($totalAmount, 2, '.', ',');
     }
 
     private function calculateRemainingCollections(): string
@@ -147,7 +147,7 @@ class AdminWidget extends BaseWidget
                 return $totals - $totalPayments; // Calculate balance
             });
 
-        return '₱'.number_format($totalAmount, 2, '.', ',');
+        return '₱' . number_format($totalAmount, 2, '.', ',');
     }
 
 
@@ -170,31 +170,30 @@ class AdminWidget extends BaseWidget
             ->count();
 
         return [
-            Stat::make('Total', $studentCount)
-                ->description('No. of students')
-                ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
-                ->color('warning'),
-            Stat::make('Total', $this->totalPaid())
-                ->description('No. of students fully paid')
-                ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
-                ->color('success'),
-            Stat::make('Total', $this->totalUnpaid())
-                ->description('No. of students not fully paid')
-                ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
-                ->color('danger'),
+            // Stat::make('Total', $studentCount)
+            //     ->description('No. of students')
+            //     ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
+            //     ->color('warning'),
+            // Stat::make('Total', $this->totalPaid())
+            //     ->description('No. of students fully paid')
+            //     ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
+            //     ->color('success'),
+            // Stat::make('Total', $this->totalUnpaid())
+            //     ->description('No. of students not fully paid')
+            //     ->descriptionIcon('heroicon-m-user-group', IconPosition::After)
+            //     ->color('danger'),
             Stat::make('Total', $this->calculateExpectedCollections())
                 ->description('Expected Collections')
                 ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
                 ->color('warning'),
-            Stat::make('Total', $this->caculateTotalPays())
-                ->description('Collected Amounts')
-                ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
-                ->color('success'),
-            Stat::make('Total', $this->calculateRemainingCollections())
-                ->description('Remaining Collections')
-                ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
-                ->color('danger'),
+            // Stat::make('Total', $this->caculateTotalPays())
+            //     ->description('Collected Amounts')
+            //     ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
+            //     ->color('success'),
+            // Stat::make('Total', $this->calculateRemainingCollections())
+            //     ->description('Remaining Collections')
+            //     ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
+            //     ->color('danger'),
         ];
-
     }
 }

@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\EnrollmentResource\RelationManagers;
 
 use App\Models\Pay;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\RawJs;
 use Filament\Tables;
@@ -16,6 +18,9 @@ use Guava\FilamentModalRelationManagers\Concerns\CanBeEmbeddedInModals;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use stdClass;
+use Filament\Notifications\Notification;
+use Illuminate\Support\HtmlString;
+use Filament\Notifications\Events\DatabaseNotificationsSent;
 
 class PaysRelationManager extends RelationManager
 {
@@ -97,7 +102,7 @@ class PaysRelationManager extends RelationManager
                     ->label('Status')
                     ->sortable()
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'paid' => 'success',
                         'returned' => 'warning',
                     }),
@@ -125,6 +130,75 @@ class PaysRelationManager extends RelationManager
 
                         if ($parentModel) {
                             $balance = $parentModel->getBalanceAttribute();
+                            $numericBalance = str_replace([',', '₱'], '', $balance);
+
+                            // Find the recipient (user) based on canId
+                            $recipient = User::where('canId', $record->enrollment->stud->studentidn)->first();
+
+                            if ($recipient) {
+                                // Send notification to the correct user
+                                Notification::make()
+                                    ->title('Payment Received')
+                                    ->body("Thank you for paying the amount of ₱" . number_format($record->amount, 2, '.', ',') .
+                                        ". Your remaining balance is ₱{$balance}.")
+                                    ->success()
+                                    ->sendToDatabase($recipient, isEventDispatched: true);
+                            } else {
+                                logger()->error("No user found with canId: {$record->enrollment->stud->studentidn}");
+                            }
+
+                            // Update enrollment status if fully paid
+                            if ((float) $numericBalance <= 0) {
+                                DB::table('enrollments')
+                                    ->where('id', $this->getOwnerRecord()->id)
+                                    ->update(['status' => 'paid']);
+
+                                logger()->info('Payment is correct and balance is zero or below.');
+                            } else {
+                                logger()->info("Remaining balance: {$numericBalance}");
+                            }
+                        } else {
+                            logger()->error('No related enrollment found for payment record.');
+                        }
+                    })
+            ])
+            ->actions([
+                // Tables\Actions\Action::make('Generate Receipt')
+                //     ->icon('heroicon-o-document')
+                //     ->action(function (Pay $record) {
+                //         $folderPath = storage_path('app/public/temp_receipts');
+                //         if (! File::exists($folderPath)) {
+                //             File::makeDirectory($folderPath, 0777, true, true);
+                //         }
+                //         $pdf = Pdf::loadView('receipts.payment', [
+                //             'id' => $record->id,
+                //             'amount_formatted' => 'PHP ' . number_format($record->amount, 2),
+                //             'status' => $record->status,
+                //             'date' => $record->created_at->format('M. d, Y g:i a'),
+                //             'enrollment' => $record->enrollment->stud->only(['id', 'lastname', 'firstname', 'middlename']),
+                //         ])
+                //             ->setOption('encoding', 'UTF-8');
+                //         $pdfOutput = $pdf->output();
+                //         $filePath = $folderPath . '/receipt-' . $record->id . '.pdf';
+                //         file_put_contents($filePath, $pdfOutput);
+                //         $publicFilePath = asset('storage/temp_receipts/receipt-' . $record->id . '.pdf');
+                //         $jsCode = "
+                //         window.open('{$publicFilePath}', '_blank');
+                //     ";
+
+                //         return $this->js($jsCode);
+                //     }),
+                Tables\Actions\EditAction::make()
+                    ->hidden(),
+                Tables\Actions\DeleteAction::make()
+                    ->label('Return')
+                    ->color('warning')
+                    ->icon('heroicon-m-arrow-path')
+                    ->after(function (Pay $record) {
+                        $parentModel = $record->enrollment;
+
+                        if ($parentModel) {
+                            $balance = $parentModel->getBalanceAttribute();
 
                             $numericBalance = str_replace([',', '₱'], '', $balance);
 
@@ -134,6 +208,9 @@ class PaysRelationManager extends RelationManager
                                     ->update(['status' => 'paid']);
                                 logger()->info('Payment is correct and balance is zero or below.');
                             } else {
+                                DB::table('enrollments')
+                                    ->where('id', $this->getOwnerRecord()->id)
+                                    ->update(['status' => NULL]);
                                 logger()->info("Remaining balance: {$numericBalance}");
                             }
                         } else {
@@ -141,87 +218,34 @@ class PaysRelationManager extends RelationManager
                         }
                     }),
             ])
-            ->actions([
-                Tables\Actions\Action::make('Generate Receipt')
-                    ->icon('heroicon-o-document')
-                    ->action(function (Pay $record) {
-                        $folderPath = storage_path('app/public/temp_receipts');
-                        if (! File::exists($folderPath)) {
-                            File::makeDirectory($folderPath, 0777, true, true);
-                        }
-                        $pdf = Pdf::loadView('receipts.payment', [
-                            'id' => $record->id,
-                            'amount_formatted' => 'PHP '.number_format($record->amount, 2),
-                            'status' => $record->status,
-                            'date' => $record->created_at->format('M. d, Y g:i a'),
-                            'enrollment' => $record->enrollment->stud->only(['id', 'lastname', 'firstname', 'middlename']),
-                        ])
-                            ->setOption('encoding', 'UTF-8');
-                        $pdfOutput = $pdf->output();
-                        $filePath = $folderPath.'/receipt-'.$record->id.'.pdf';
-                        file_put_contents($filePath, $pdfOutput);
-                        $publicFilePath = asset('storage/temp_receipts/receipt-'.$record->id.'.pdf');
-                        $jsCode = "
-                        window.open('{$publicFilePath}', '_blank');
-                    ";
-
-                        return $this->js($jsCode);
-                    }),
-                Tables\Actions\EditAction::make()
-                    ->hidden(),
-                Tables\Actions\DeleteAction::make()
-                ->after(function (Pay $record) {
-                    $parentModel = $record->enrollment;
-
-                    if ($parentModel) {
-                        $balance = $parentModel->getBalanceAttribute();
-
-                        $numericBalance = str_replace([',', '₱'], '', $balance);
-
-                        if ((float) $numericBalance <= 0) {
-                            DB::table('enrollments')
-                                ->where('id', $this->getOwnerRecord()->id)
-                                ->update(['status' => 'paid']);
-                            logger()->info('Payment is correct and balance is zero or below.');
-                        } else {
-                            DB::table('enrollments')
-                                ->where('id', $this->getOwnerRecord()->id)
-                                ->update(['status' => NULL]);
-                            logger()->info("Remaining balance: {$numericBalance}");
-                        }
-                    } else {
-                        logger()->error('No related enrollment found for payment record.');
-                    }
-                }),
-            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                    ->after(function ($records) { // `$records` is a collection of selected records
-                        foreach ($records as $record) {
-                            $parentModel = $record->enrollment;
+                        ->after(function ($records, Get $amount) { // `$records` is a collection of selected records
+                            foreach ($records as $record) {
+                                $parentModel = $record->enrollment;
 
-                            if ($parentModel) {
-                                $balance = $parentModel->getBalanceAttribute();
+                                if ($parentModel) {
+                                    $balance = $parentModel->getBalanceAttribute();
 
-                                $numericBalance = str_replace([',', '₱'], '', $balance);
+                                    $numericBalance = str_replace([',', '₱'], '', $balance);
 
-                                if ((float) $numericBalance <= 0) {
-                                    DB::table('enrollments')
-                                        ->where('id', $parentModel->id) // Use the `enrollment` model's ID
-                                        ->update(['status' => 'paid']);
-                                    logger()->info("Payment is correct for enrollment ID {$parentModel->id}, balance is zero or below.");
+                                    if ((float) $numericBalance <= 0) {
+                                        DB::table('enrollments')
+                                            ->where('id', $parentModel->id) // Use the `enrollment` model's ID
+                                            ->update(['status' => 'paid']);
+                                        logger()->info("Payment is correct for enrollment ID {$parentModel->id}, balance is zero or below.");
+                                    } else {
+                                        DB::table('enrollments')
+                                            ->where('id', $parentModel->id) // Use the `enrollment` model's ID
+                                            ->update(['status' => NULL]);
+                                        logger()->info("Remaining balance for enrollment ID {$parentModel->id}: {$numericBalance}");
+                                    }
                                 } else {
-                                    DB::table('enrollments')
-                                        ->where('id', $parentModel->id) // Use the `enrollment` model's ID
-                                        ->update(['status' => NULL]);
-                                    logger()->info("Remaining balance for enrollment ID {$parentModel->id}: {$numericBalance}");
+                                    logger()->error("No related enrollment found for payment record ID {$record->id}.");
                                 }
-                            } else {
-                                logger()->error("No related enrollment found for payment record ID {$record->id}.");
                             }
-                        }
-                    }),
+                        }),
                 ]),
             ])
 

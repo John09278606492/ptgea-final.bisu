@@ -36,7 +36,7 @@ class TotalPayableWidget extends BaseWidget
                 return $collectionsTotal + $yearlevelPaymentsTotal;
             });
 
-        return '₱'.number_format($totalAmount, 2, '.', ',');
+        return '₱' . number_format($totalAmount, 2, '.', ',');
     }
 
     private function calculateCollectedAmounts(): string
@@ -49,7 +49,7 @@ class TotalPayableWidget extends BaseWidget
                 return $enrollment->pays->sum('amount');
             });
 
-        return '₱'.number_format($totalAmount, 2, '.', ',');
+        return '₱' . number_format($totalAmount, 2, '.', ',');
     }
 
     private function calculateRemainingCollections(): string
@@ -68,7 +68,7 @@ class TotalPayableWidget extends BaseWidget
                 return $totals - $totalPayments; // Calculate balance
             });
 
-        return '₱'.number_format($totalAmount, 2, '.', ',');
+        return '₱' . number_format($totalAmount, 2, '.', ',');
     }
 
     private function calculateRemainingCollectionsUsingQuery(): string
@@ -79,7 +79,7 @@ class TotalPayableWidget extends BaseWidget
             ->join('pays', 'enrollments.id', '=', 'pays.enrollment_id')
             ->sum(DB::raw('COALESCE(collections.amount, 0) + COALESCE(yearlevelpayments.amount, 0) - COALESCE(pays.amount, 0)'));
 
-        return '₱'.number_format($totalAmount, 2, '.', ',');
+        return '₱' . number_format($totalAmount, 2, '.', ',');
     }
 
     protected function getStats(): array

@@ -58,13 +58,19 @@ class EnrollmentResource extends Resource
 
     public $siblingsInformation;
 
-    public function mount($record)
-    {
-        $this->record = $record;
-        $this->payments = Enrollment::with(['pays', 'stud',
-            'program', 'college', 'schoolyear',
-            'collections', 'yearlevelpayments'])->find($record);
-    }
+    // public function mount($record)
+    // {
+    //     $this->record = $record;
+    //     $this->payments = Enrollment::with([
+    //         'pays',
+    //         'stud',
+    //         'program',
+    //         'college',
+    //         'schoolyear',
+    //         'collections',
+    //         'yearlevelpayments'
+    //     ])->find($record);
+    // }
 
     public static function getNavigationBadge(): ?string
     {
@@ -143,7 +149,7 @@ class EnrollmentResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('program_id')
                             ->label('Program')
-                            ->options(fn (Get $get): Collection => Program::query()
+                            ->options(fn(Get $get): Collection => Program::query()
                                 ->where('college_id', $get('college_id'))
                                 ->pluck('program', 'id'))
                             ->searchable()
@@ -156,30 +162,30 @@ class EnrollmentResource extends Resource
                             ->required(),
                         Forms\Components\Select::make('yearlevel_id')
                             ->label('Year Level')
-                            ->options(fn (Get $get): Collection => Yearlevel::query()
+                            ->options(fn(Get $get): Collection => Yearlevel::query()
                                 ->where('program_id', $get('program_id'))
                                 ->pluck('yearlevel', 'id'))
                             ->searchable()
                             ->preload()
                             ->live()
                             ->reactive()
-                            ->afterStateUpdated(fn (Set $set) => $set('yearlevelpayment_id', []))
+                            ->afterStateUpdated(fn(Set $set) => $set('yearlevelpayment_id', []))
                             ->required(),
                         CheckboxList::make('yearlevelpayment')
                             ->label('Year Level Fee')
                             ->inlineLabel()
                             ->relationship('yearlevelpayments', 'amount') // Define the relationship and the display column
-                            ->options(fn (Get $get): array => Yearlevelpayments::query()
+                            ->options(fn(Get $get): array => Yearlevelpayments::query()
                                 ->where('yearlevel_id', $get('yearlevel_id'))
                                 ->get()
-                                ->mapWithKeys(fn ($payment) => [
-                                    $payment->id => '₱'.number_format($payment->amount, 2), // Only amount here
+                                ->mapWithKeys(fn($payment) => [
+                                    $payment->id => '₱' . number_format($payment->amount, 2), // Only amount here
                                 ])
                                 ->toArray())
-                            ->descriptions(fn (Get $get): array => Yearlevelpayments::query()
+                            ->descriptions(fn(Get $get): array => Yearlevelpayments::query()
                                 ->where('yearlevel_id', $get('yearlevel_id'))
                                 ->get()
-                                ->mapWithKeys(fn ($payment) => [
+                                ->mapWithKeys(fn($payment) => [
                                     $payment->id => new HtmlString(
                                         $payment->description
                                             ? e($payment->description)
@@ -219,7 +225,7 @@ class EnrollmentResource extends Resource
                             ->label('Semester')
                             ->inlineLabel()
                             ->relationship('semesters', 'semester')
-                            ->options(fn (Get $get): array => Semester::query()
+                            ->options(fn(Get $get): array => Semester::query()
                                 ->where('schoolyear_id', $get('schoolyear_id'))
                                 ->pluck('semester', 'id')
                                 ->toArray())
@@ -234,24 +240,24 @@ class EnrollmentResource extends Resource
                             ->label('Semester Fee Type')
                             ->inlineLabel()
                             ->relationship('collections', 'amount') // Adjusted to match the relationship name and attribute in your model
-                            ->options(fn (Get $get): array => ModelsCollection::query()
+                            ->options(fn(Get $get): array => ModelsCollection::query()
                                 ->whereIn('semester_id', $get('semester_id'))
                                 ->get()
-                                ->mapWithKeys(fn ($collection) => [
-                                    $collection->id => '₱'.number_format($collection->amount, 2), // Only amount here
+                                ->mapWithKeys(fn($collection) => [
+                                    $collection->id => '₱' . number_format($collection->amount, 2), // Only amount here
                                 ])
                                 ->toArray())
-                            ->descriptions(fn (Get $get): array => ModelsCollection::query()
+                            ->descriptions(fn(Get $get): array => ModelsCollection::query()
                                 ->whereIn('semester_id', $get('semester_id'))
                                 ->with('semester') // Eager load the semester relationship
                                 ->get()
-                                ->mapWithKeys(fn ($collection) => [
+                                ->mapWithKeys(fn($collection) => [
                                     $collection->id => new HtmlString(
                                         ($collection->description
                                             ? e($collection->description)
                                             : '<em>No description available.</em>') // Payment description
-                                        .'<br>'
-                                        .'<small>Semester: '.e(optional($collection->semester)->semester ?? 'Unknown Semester').'</small>' // Add semester type
+                                            . '<br>'
+                                            . '<small>Semester: ' . e(optional($collection->semester)->semester ?? 'Unknown Semester') . '</small>' // Add semester type
                                     ),
                                 ])
                                 ->toArray())
@@ -298,7 +304,9 @@ class EnrollmentResource extends Resource
                     ->weight(FontWeight::Bold)
                     ->sortable(['lastname', 'firstname', 'middlename'])
                     ->searchable([
-                        'lastname', 'firstname', 'middlename',
+                        'lastname',
+                        'firstname',
+                        'middlename',
                     ]),
                 Tables\Columns\TextColumn::make('college.college')
                     ->numeric()
@@ -347,7 +355,7 @@ class EnrollmentResource extends Resource
                 Tables\Columns\TextColumn::make('stud.status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'active' => 'success',
                         'inactive' => 'danger',
                         'graduated' => 'gray',
@@ -394,7 +402,7 @@ class EnrollmentResource extends Resource
                         Select::make('program_id')
                             ->label('Program')
                             ->placeholder('All')
-                            ->options(fn (Get $get) => Program::query()
+                            ->options(fn(Get $get) => Program::query()
                                 ->where('college_id', $get('college_id'))
                                 ->pluck('program', 'id'))
                             ->reactive()
@@ -407,13 +415,13 @@ class EnrollmentResource extends Resource
                         Select::make('yearlevel_id')
                             ->label('Year Level')
                             ->placeholder('All')
-                            ->options(fn (Get $get) => Yearlevel::query()
+                            ->options(fn(Get $get) => Yearlevel::query()
                                 ->where('program_id', $get('program_id'))
                                 ->pluck('yearlevel', 'id'))
                             ->reactive()
                             ->preload()
                             ->searchable()
-                            ->afterStateUpdated(fn($livewire) => $livewire->dispatch('refresh') ),
+                            ->afterStateUpdated(fn($livewire) => $livewire->dispatch('refresh')),
                         Select::make('status')
                             ->label('Status')
                             ->placeholder('All')
@@ -426,21 +434,21 @@ class EnrollmentResource extends Resource
                         return $query
                             ->when(
                                 $data['schoolyear_id'] ?? null,
-                                fn (Builder $query, $schoolyearId) => $query->where('schoolyear_id', $schoolyearId)
+                                fn(Builder $query, $schoolyearId) => $query->where('schoolyear_id', $schoolyearId)
                             )
                             ->when(
                                 $data['college_id'] ?? null,
-                                fn (Builder $query, $collegeId) => $query->where('college_id', $collegeId)
+                                fn(Builder $query, $collegeId) => $query->where('college_id', $collegeId)
                             )
                             ->when(
                                 $data['program_id'] ?? null,
-                                fn (Builder $query, $programId) => $query->where('program_id', $programId)
+                                fn(Builder $query, $programId) => $query->where('program_id', $programId)
                             )
                             ->when(
                                 $data['yearlevel_id'] ?? null,
-                                fn (Builder $query, $yearlevelId) => $query->where('yearlevel_id', $yearlevelId)
+                                fn(Builder $query, $yearlevelId) => $query->where('yearlevel_id', $yearlevelId)
                             )
-                            ->when($data['status'] ?? null, fn (Builder $query, $status) => $query->when($status, function ($query) use ($status) {
+                            ->when($data['status'] ?? null, fn(Builder $query, $status) => $query->when($status, function ($query) use ($status) {
                                 // Relate the status select filter to the query
                                 if ($status === 'paid') {
                                     $query->where('status', 'paid');
@@ -452,19 +460,19 @@ class EnrollmentResource extends Resource
                     ->indicateUsing(function (array $data): array {
                         $indicators = [];
                         if (! empty($data['schoolyear_id'])) {
-                            $indicators['schoolyear_id'] = 'Schoolyear: '.Schoolyear::find($data['schoolyear_id'])->schoolyear ?? 'N/A';
+                            $indicators['schoolyear_id'] = 'Schoolyear: ' . Schoolyear::find($data['schoolyear_id'])->schoolyear ?? 'N/A';
                         }
 
                         if (! empty($data['college_id'])) {
-                            $indicators['college_id'] = 'College: '.College::find($data['college_id'])->college ?? 'N/A';
+                            $indicators['college_id'] = 'College: ' . College::find($data['college_id'])->college ?? 'N/A';
                         }
 
                         if (! empty($data['program_id'])) {
-                            $indicators['program_id'] = 'Program: '.Program::find($data['program_id'])->program ?? 'N/A';
+                            $indicators['program_id'] = 'Program: ' . Program::find($data['program_id'])->program ?? 'N/A';
                         }
 
                         if (! empty($data['yearlevel_id'])) {
-                            $indicators['yearlevel_id'] = 'Year Level: '.Yearlevel::find($data['yearlevel_id'])->yearlevel ?? 'N/A';
+                            $indicators['yearlevel_id'] = 'Year Level: ' . Yearlevel::find($data['yearlevel_id'])->yearlevel ?? 'N/A';
                         }
 
                         if (! empty($data['status'])) {
@@ -478,7 +486,7 @@ class EnrollmentResource extends Resource
                     ->columnSpan(5)
 
             ], layout: FiltersLayout::AboveContent)->filtersFormColumns(5)
-            ->deferLoading()
+            // ->deferLoading()
             ->actions([
                 // Tables\Actions\ViewAction::make()
                 //     ->color('primary')
@@ -487,7 +495,7 @@ class EnrollmentResource extends Resource
                     ->label('Invoice')
                     ->color('cyan')
                     ->icon('heroicon-m-document-text')
-                    ->url(fn ($record) => self::getUrl('invoice', ['record' => $record->id])),
+                    ->url(fn($record) => self::getUrl('invoice', ['record' => $record->id])),
                 RelationManagerAction::make('pays-relation-manager')
                     ->label('Pay')
                     ->icon('heroicon-m-banknotes')
@@ -549,13 +557,13 @@ class EnrollmentResource extends Resource
                     ->schema([
                         TextEntry::make('total_payments')
                             ->label('Amount Payable')
-                            ->default(fn ($record) => $record ? $record->total_payments : '₱0.00'),
+                            ->default(fn($record) => $record ? $record->total_payments : '₱0.00'),
                         TextEntry::make('total_pays_amount')
                             ->label('Amount Paid')
-                            ->default(fn ($record) => $record ? '₱'.number_format($record->pays->sum('amount'), 2) : '₱0.00'),
+                            ->default(fn($record) => $record ? '₱' . number_format($record->pays->sum('amount'), 2) : '₱0.00'),
                         TextEntry::make('balance')
                             ->label('Remaining Balance')
-                            ->default(fn ($record) => $record ? '₱'.number_format(
+                            ->default(fn($record) => $record ? '₱' . number_format(
                                 ($record->collections()->sum('amount') + $record->yearlevelpayments()->sum('amount')) - $record->pays->sum('amount'),
                                 2
                             ) : '₱0.00'),

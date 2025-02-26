@@ -74,6 +74,7 @@ class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize,
 
         return [
             ++$this->rowNumber,
+            $students->stud->studentidn,
             $students->stud->lastname . ', ' . $students->stud->firstname . ', ' . $students->stud->middlename,
             $students->college->college,
             $students->program->program,
@@ -88,7 +89,7 @@ class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize,
     {
         return [
             '#',
-            'STudent IDN',
+            'Student IDN',
             'Complete Name',
             'College',
             'Program',
@@ -109,10 +110,10 @@ class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize,
                 $totalRow = $summaryRow + 1;
 
                 // Make headers bold
-                $sheet->getStyle('A1:H1')->getFont()->setBold(true);
+                $sheet->getStyle('A1:I1')->getFont()->setBold(true);
 
                 // Apply borders to all rows with data
-                $cellRange = 'A1:H' . ($this->rowNumber + 1);
+                $cellRange = 'A1:I' . ($this->rowNumber + 1);
                 $sheet->getStyle($cellRange)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
@@ -126,24 +127,24 @@ class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize,
                 ]);
 
                 // Add summary values
-                $sheet->setCellValue('F' . $lastRow, 'Grand Total Amount Paid:');
-                $sheet->setCellValue('G' . $lastRow, number_format($this->totalPayments, 2));
-                $sheet->setCellValue('F' . $summaryRow, 'Grand Total Remaining Balance:');
-                $sheet->setCellValue('H' . $summaryRow, number_format($this->totalBalance, 2));
-                $sheet->setCellValue('F' . $totalRow, 'Overall Total Expected Amount:');
-                $sheet->setCellValue('G' . $totalRow, number_format($this->totalPayments + $this->totalBalance, 2));
+                $sheet->setCellValue('G' . $lastRow, 'Grand Total Amount Paid:');
+                $sheet->setCellValue('H' . $lastRow, number_format($this->totalPayments, 2));
+                $sheet->setCellValue('G' . $summaryRow, 'Grand Total Remaining Balance:');
+                $sheet->setCellValue('I' . $summaryRow, number_format($this->totalBalance, 2));
+                $sheet->setCellValue('G' . $totalRow, 'Overall Total Expected Amount:');
+                $sheet->setCellValue('H' . $totalRow, number_format($this->totalPayments + $this->totalBalance, 2));
 
                 // Make summary rows bold
-                $sheet->getStyle('F' . $lastRow . ':H' . $lastRow)->getFont()->setBold(true);
-                $sheet->getStyle('F' . $summaryRow . ':H' . $summaryRow)->getFont()->setBold(true);
-                $sheet->getStyle('F' . $totalRow . ':G' . $totalRow)->getFont()->setBold(true);
+                $sheet->getStyle('G' . $lastRow . ':I' . $lastRow)->getFont()->setBold(true);
+                $sheet->getStyle('G' . $summaryRow . ':I' . $summaryRow)->getFont()->setBold(true);
+                $sheet->getStyle('G' . $totalRow . ':I' . $totalRow)->getFont()->setBold(true);
 
                 // Center align the summary values
-                $sheet->getStyle('G' . $lastRow . ':H' . $summaryRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle('G' . $totalRow . ':H' . $totalRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('H' . $lastRow . ':I' . $summaryRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('H' . $totalRow . ':I' . $totalRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
                 // Merge Overall Total Expected Amount row
-                $sheet->mergeCells('G' . $totalRow . ':H' . $totalRow);
+                $sheet->mergeCells('H' . $totalRow . ':I' . $totalRow);
             },
         ];
     }

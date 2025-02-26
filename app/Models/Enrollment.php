@@ -66,14 +66,14 @@ class Enrollment extends Model
 
     public function getFormattedCollectionsAttribute(): array
     {
-        return $this->collections->map(function ($collection) {
+        return $this->collections()->map(function ($collection) {
             return '₱' . number_format($collection->amount, 2) . ' - ' . $collection->description;
         })->toArray();
     }
 
     public function getFormattedYearlevelPaymentsAttribute(): array
     {
-        return $this->yearlevelpayments->map(function ($payment) {
+        return $this->yearlevelpayments()->map(function ($payment) {
             return '₱' . number_format($payment->amount, 2) . ' - ' . $payment->description;
         })->toArray();
     }
@@ -110,7 +110,7 @@ class Enrollment extends Model
 
     public function getTotalPaysAmountAttribute(): string
     {
-        $totalAmount = $this->pays->sum('amount');
+        $totalAmount = $this->pays()->sum('amount');
 
         return '₱' . number_format($totalAmount, 2);
     }
@@ -119,7 +119,7 @@ class Enrollment extends Model
     {
         $collectionsTotal = $this->collections()->sum('amount');
         $yearlevelPaymentsTotal = $this->yearlevelpayments()->sum('amount');
-        $totalAmount = $this->pays->sum('amount');
+        $totalAmount = $this->pays()->sum('amount');
 
         if ($collectionsTotal == 0 && $yearlevelPaymentsTotal == 0) {
             return 'No Fees';

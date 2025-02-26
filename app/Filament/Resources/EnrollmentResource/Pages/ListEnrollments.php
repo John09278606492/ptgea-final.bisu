@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Log;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Livewire\Attributes\On;
 use Filament\Actions\Exports\Models\Export;
+use Illuminate\Support\HtmlString;
+use Torgodly\Html2Media\Actions\Html2MediaAction;
 
 class ListEnrollments extends ListRecords
 {

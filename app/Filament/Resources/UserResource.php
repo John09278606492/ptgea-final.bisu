@@ -33,10 +33,20 @@ class UserResource extends Resource
                 Section::make()
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                        ->required()
-                        ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/\\b\\w/g, char => char.toUpperCase())'])
+                            ->required()
+                            ->hidden()
+                            ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/\\b\\w/g, char => char.toUpperCase())'])
                             ->maxLength(255),
-
+                        Forms\Components\TextInput::make('firstname')
+                            ->maxLength(255)
+                            ->required()
+                            ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/\\b\\w/g, char => char.toUpperCase())']),
+                        Forms\Components\TextInput::make('middlename')
+                            ->maxLength(255)
+                            ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/\\b\\w/g, char => char.toUpperCase())']),
+                        Forms\Components\TextInput::make('lastname')
+                            ->maxLength(255)
+                            ->extraInputAttributes(['onInput' => 'this.value = this.value.replace(/\\b\\w/g, char => char.toUpperCase())']),
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->required()

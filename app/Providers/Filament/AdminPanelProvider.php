@@ -26,6 +26,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
+use DutchCodingCompany\FilamentSocialite\Provider;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -36,6 +38,22 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->plugin(
+                FilamentSocialitePlugin::make()
+                    // (required) Add providers corresponding with providers in `config/services.php`.
+                    ->providers([
+                        // Create a provider 'gitlab' corresponding to the Socialite driver with the same name.
+                        Provider::make('google')
+                            ->label('Google')
+                            ->icon('fab-google')
+                            ->color(Color::hex('#4285F4'))
+                            ->outlined(false)
+                            ->stateless(false)
+                        // ->scopes(['...'])
+                        // ->with(['...']),
+                    ])
+                    ->registration(true)
+            )
             // ->brandLogo(asset('images/ptgea_logo.png'))
             // ->brandLogo(fn () => view('brandname'))
             // ->brandLogoHeight('3rem')

@@ -2,21 +2,32 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.1|^8.2",
         "barryvdh/laravel-dompdf": "^3.0",
         "barryvdh/laravel-snappy": "^1.0",
         "dompdf/dompdf": "^3.1",
+        "dutchcodingcompany/filament-socialite": "^2.3",
         "filament/filament": "^3.2",
         "guava/filament-modal-relation-managers": "^1.1",
         "guzzlehttp/guzzle": "^7.2",
+        "h4cc/wkhtmltoimage-amd64": "0.12.x",
+        "h4cc/wkhtmltopdf-amd64": "^0.12.4",
+        "knplabs/knp-snappy": "^1.5",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "maatwebsite/excel": "^3.1",
-        "malzariey/filament-daterangepicker-filter": "^3.1"
+        "malzariey/filament-daterangepicker-filter": "^3.1",
+        "owenvoke/blade-fontawesome": "^2.9",
+        "socialiteproviders/google": "^4.1",
+        "socialiteproviders/zoho": "^4.1",
+        "torgodly/html2media": "^1.1"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.14",
@@ -68,6 +79,9 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "platform": {
+            "php": "8.2"
         }
     },
     "minimum-stability": "stable",

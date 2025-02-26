@@ -12,6 +12,7 @@ use App\Models\Program;
 use App\Models\Schoolyear;
 use App\Models\Semester;
 use App\Models\Stud;
+use App\Models\User;
 use App\Models\Yearlevel;
 use App\Models\Yearlevelpayments;
 use Filament\Forms;
@@ -19,15 +20,18 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\HtmlString;
 use stdClass;
 
@@ -377,6 +381,7 @@ class StudResource extends Resource
                     ->relationManager(SiblingRelationManager::make()),
                 Tables\Actions\EditAction::make()
                     ->color('warning'),
+                DeleteAction::make()
             ])
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([
@@ -385,6 +390,49 @@ class StudResource extends Resource
             ])
             ->emptyStateHeading('No students yet')
             ->emptyStateDescription('Once you add students, it will appear here.');
+    }
+
+    public static function afterCreate(Stud $record): void
+    {
+        $studentId = $record->studentidn;
+        $firstName = $record->firstname;
+        $middleName = $record->middlename;
+        $lastName = $record->lastname;
+        $fullName = "{$firstName} {$middleName} {$lastName}";
+        $email = "ptgea@{$studentId}";
+        $role = "guest";
+        $hashedPassword = Hash::make($studentId); // Hash the student ID for password
+
+        // Check if the user already exists
+        $existingUser = User::where('canId', $studentId)->first();
+
+        if ($existingUser) {
+            // Notify that the record already exists
+            Notification::make()
+                ->title('Duplicate Entry')
+                ->body("A user with Student ID {$studentId} already exists.")
+                ->danger()
+                ->send();
+        } else {
+            // Insert the new user
+            User::create([
+                'firstname' => $firstName,
+                'middlename' => $middleName,
+                'lastname' => $lastName,
+                'name' => $fullName,
+                'email' => $email,
+                'role' => $role,
+                'canId' => $studentId,
+                'password' => $hashedPassword, // Store hashed password
+            ]);
+
+            // Notify that the user was created
+            Notification::make()
+                ->title('User Created')
+                ->body("User {$fullName} has been successfully created.")
+                ->success()
+                ->send();
+        }
     }
 
     public static function getRelations(): array
