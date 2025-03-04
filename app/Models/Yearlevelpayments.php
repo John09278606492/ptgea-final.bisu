@@ -12,7 +12,7 @@ class Yearlevelpayments extends Model
     use HasFactory;
 
     protected $fillable = [
-        'yearlevel_id',
+        'yearlevel_id1',
         'amount',
         'description',
     ];
@@ -22,7 +22,7 @@ class Yearlevelpayments extends Model
      */
     public function yearlevel(): BelongsTo
     {
-        return $this->belongsTo(Yearlevel::class, 'yearlevel_id');
+        return $this->belongsTo(Yearlevel::class, 'yearlevel_id1');
     }
 
     public function scolleges(): BelongsToMany

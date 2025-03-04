@@ -39,6 +39,7 @@ use Filament\Tables\Table;
 use Guava\FilamentModalRelationManagers\Actions\Table\RelationManagerAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use stdClass;
 
@@ -176,14 +177,14 @@ class EnrollmentResource extends Resource
                             ->inlineLabel()
                             ->relationship('yearlevelpayments', 'amount') // Define the relationship and the display column
                             ->options(fn(Get $get): array => Yearlevelpayments::query()
-                                ->where('yearlevel_id', $get('yearlevel_id'))
+                                ->where('yearlevel_id1', $get('yearlevel_id'))
                                 ->get()
                                 ->mapWithKeys(fn($payment) => [
                                     $payment->id => '₱' . number_format($payment->amount, 2), // Only amount here
                                 ])
                                 ->toArray())
                             ->descriptions(fn(Get $get): array => Yearlevelpayments::query()
-                                ->where('yearlevel_id', $get('yearlevel_id'))
+                                ->where('yearlevel_id1', $get('yearlevel_id'))
                                 ->get()
                                 ->mapWithKeys(fn($payment) => [
                                     $payment->id => new HtmlString(
@@ -423,7 +424,7 @@ class EnrollmentResource extends Resource
                             ->searchable()
                             ->afterStateUpdated(fn($livewire) => $livewire->dispatch('refresh')),
                         Select::make('status')
-                            ->label('Status')
+                            ->label('Payment Status')
                             ->placeholder('All')
                             ->options([
                                 'paid' => 'Paid',

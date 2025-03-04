@@ -26,7 +26,7 @@ class Yearlevel extends Model
      */
     public function yearlevelpayments(): HasMany
     {
-        return $this->hasMany(Yearlevelpayments::class, 'yearlevel_id');
+        return $this->hasMany(Yearlevelpayments::class, 'yearlevel_id1');
     }
 
     // public function getTotalFormattedAmountAttribute(): string

@@ -25,61 +25,65 @@ class TotalPayableWidget extends BaseWidget
 
     private function calculateExpectedCollections(): string
     {
-        $totalAmount = $this->getPageTableQuery()
-            ->with(['collections', 'yearlevelpayments']) // Eager load related models
-            ->select('enrollments.id') // Fetch only necessary columns
-            ->get()
-            ->sum(function ($enrollment) {
-                $collectionsTotal = $enrollment->collections->sum('amount');
-                $yearlevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
+        // Get expected collections
+        $collectionsTotal = $this->getPageTableQuery()
+            ->leftJoin('collection_enrollment', 'enrollments.id', '=', 'collection_enrollment.enrollment_id')
+            ->leftJoin('collections', 'collection_enrollment.collection_id', '=', 'collections.id')
+            ->selectRaw('COALESCE(SUM(collections.amount), 0) as total')
+            ->value('total');
 
-                return $collectionsTotal + $yearlevelPaymentsTotal;
-            });
+        // Get expected yearlevelpayments
+        $yearLevelTotal = $this->getPageTableQuery()
+            ->leftJoin('enrollment_yearlevelpayments', 'enrollments.id', '=', 'enrollment_yearlevelpayments.enrollment_id')
+            ->leftJoin('yearlevelpayments', 'enrollment_yearlevelpayments.yearlevelpayments_id', '=', 'yearlevelpayments.id')
+            ->selectRaw('COALESCE(SUM(yearlevelpayments.amount), 0) as total')
+            ->value('total');
 
-        return '₱' . number_format($totalAmount, 2, '.', ',');
+        // Total expected amount
+        $expectedTotal = $collectionsTotal + $yearLevelTotal;
+
+        return '₱' . number_format($expectedTotal, 2, '.', ',');
     }
 
     private function calculateCollectedAmounts(): string
     {
         $totalAmount = $this->getPageTableQuery()
-            ->with('pays') // Eager load the pays relationship
-            ->select('enrollments.id') // Fetch only necessary columns
-            ->get()
-            ->sum(function ($enrollment) {
-                return $enrollment->pays->sum('amount');
-            });
+            ->leftJoin('pays', 'enrollments.id', '=', 'pays.enrollment_id')
+            ->selectRaw('COALESCE(SUM(pays.amount), 0) as total')
+            ->value('total');
 
-        return '₱' . number_format($totalAmount, 2, '.', ',');
+        return '₱' . number_format($totalAmount ?? 0, 2, '.', ',');
     }
 
     private function calculateRemainingCollections(): string
     {
-        $totalAmount = $this->getPageTableQuery()
-            ->with(['collections', 'yearlevelpayments', 'pays']) // Eager load all related models
-            ->select('enrollments.id') // Fetch only necessary columns
-            ->get()
-            ->sum(function ($enrollment) {
-                $collectionsTotal = $enrollment->collections->sum('amount');
-                $yearlevelPaymentsTotal = $enrollment->yearlevelpayments->sum('amount');
-                $totalPayments = $enrollment->pays->sum('amount');
+        // Get expected collections
+        $collectionsTotal = $this->getPageTableQuery()
+            ->leftJoin('collection_enrollment', 'enrollments.id', '=', 'collection_enrollment.enrollment_id')
+            ->leftJoin('collections', 'collection_enrollment.collection_id', '=', 'collections.id')
+            ->selectRaw('COALESCE(SUM(collections.amount), 0) as total')
+            ->value('total');
 
-                $totals = $collectionsTotal + $yearlevelPaymentsTotal;
+        // Get expected yearlevelpayments
+        $yearLevelTotal = $this->getPageTableQuery()
+            ->leftJoin('enrollment_yearlevelpayments', 'enrollments.id', '=', 'enrollment_yearlevelpayments.enrollment_id')
+            ->leftJoin('yearlevelpayments', 'enrollment_yearlevelpayments.yearlevelpayments_id', '=', 'yearlevelpayments.id')
+            ->selectRaw('COALESCE(SUM(yearlevelpayments.amount), 0) as total')
+            ->value('total');
 
-                return $totals - $totalPayments; // Calculate balance
-            });
+        // Total expected amount
+        $expectedTotal = $collectionsTotal + $yearLevelTotal;
 
-        return '₱' . number_format($totalAmount, 2, '.', ',');
-    }
+        // Get collected payments
+        $paidTotal = $this->getPageTableQuery()
+            ->leftJoin('pays', 'enrollments.id', '=', 'pays.enrollment_id')
+            ->selectRaw('COALESCE(SUM(pays.amount), 0) as total')
+            ->value('total');
 
-    private function calculateRemainingCollectionsUsingQuery(): string
-    {
-        $totalAmount = $this->getPageTableQuery()
-            ->join('collections', 'enrollments.id', '=', 'collections.enrollment_id')
-            ->join('yearlevelpayments', 'enrollments.id', '=', 'yearlevelpayments.enrollment_id')
-            ->join('pays', 'enrollments.id', '=', 'pays.enrollment_id')
-            ->sum(DB::raw('COALESCE(collections.amount, 0) + COALESCE(yearlevelpayments.amount, 0) - COALESCE(pays.amount, 0)'));
+        // Ensure no negative values
+        $remaining = max(0, $expectedTotal - $paidTotal);
 
-        return '₱' . number_format($totalAmount, 2, '.', ',');
+        return '₱' . number_format($remaining, 2, '.', ',');
     }
 
     protected function getStats(): array
@@ -89,7 +93,6 @@ class TotalPayableWidget extends BaseWidget
                 ->description('Expected Collections')
                 ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)
                 ->color('primary'),
-
             Stat::make('Total', $this->calculateCollectedAmounts())
                 ->description('Collected Amount')
                 ->descriptionIcon('heroicon-m-banknotes', IconPosition::After)

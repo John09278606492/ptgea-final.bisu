@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ExportPaymentRecordsJobsToPdf;
+use App\Jobs\ExportStudentPaymentsJobPdf;
 use App\Models\Enrollment;
 use App\Models\InvoiceRecord;
 use App\Models\Pay;
@@ -58,7 +60,7 @@ class InvoiceController extends Controller
             $pdf = Pdf::loadView('pdf.print_invoice', compact('payments', 'siblingsInformation'))
                 ->setPaper($customPaper);
 
-            return $pdf->stream();
+            return $pdf->stream('invoice_' . $payments->stud->name . '.pdf');
         } else {
             // Notify if no record exists
             Notification::make()
@@ -113,11 +115,11 @@ class InvoiceController extends Controller
             $customPaper = [0, 0, 300, 600];
 
             // Generate the PDF with a custom paper size
-            $pdf = Pdf::load('pdf.new_print_invoices', ['payments' => $this->payments])
+            $pdf = Pdf::loadView('pdf.new_print_invoices', ['payments' => $this->payments])
                 ->setPaper($customPaper);
 
             // Download the PDF instead of streaming
-            return $pdf->stream('invoice_' . $id . '.pdf');
+            return $pdf->download('invoice_' . $id . '.pdf');
         } else {
             // Notify if no record exists
             Notification::make()
@@ -128,7 +130,6 @@ class InvoiceController extends Controller
             return redirect()->back();
         }
     }
-
 
     public function exportRecord(Request $request)
     {
@@ -138,68 +139,159 @@ class InvoiceController extends Controller
         $yearlevel_id = $request->input('yearlevel_id');
         $status = $request->input('status');
 
-        // Start with a base query
-        $query = Enrollment::query();
+        // Dispatch the job to the queue
+        ExportStudentPaymentsJobPdf::dispatch(
+            $schoolyear_id,
+            $college_id,
+            $program_id,
+            $yearlevel_id,
+            $status,
+            auth()->user() // Pass authenticated user for notification
+        );
 
-        // Add filters conditionally
-        if ($schoolyear_id) {
-            $query->where('schoolyear_id', $schoolyear_id);
+        // If this is an AJAX request expecting JSON
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'message' => 'Export is being processed. You will be notified when it is ready.',
+                'success' => true
+            ]);
         }
 
-        if ($college_id) {
-            $query->where('college_id', $college_id);
-        }
+        Notification::make()
+            ->title('PDF Export in Progress')
+            ->body('Your student payment information export is being processed. You will be notified once it is ready for download.')
+            ->info()
+            ->color('info')
+            ->send();
 
-        if ($program_id) {
-            $query->where('program_id', $program_id);
-        }
-
-        if ($yearlevel_id) {
-            $query->where('yearlevel_id', $yearlevel_id);
-        }
-
-        // Handle status filtering
-        if ($status === 'paid') {
-            $query->where('status', 'paid');
-        } elseif ($status === 'not_paid') {
-            $query->whereNull('status');
-        }
-
-        // Get the results
-        $payments = $query->get(); // Use get() to retrieve ALL records
-
-        // Check if any records exist
-        if ($payments->isNotEmpty()) {
-
-            // Generate the PDF with all records using SnappyPdf
-
-            $pdf = SnappyPdf::loadView('pdf.print_report', ['payments' => $payments]);
-
-            // Stream the PDF to the browser
-            return $pdf->download('Student-Payment&Balance-Record-Export.pdf');
-        } else {
-            // Notify if no record exists
-            Notification::make()
-                ->title('No invoice record found!')
-                ->danger()
-                ->send();
-
-            return redirect()->back();
-        }
+        // Return a redirect or view as needed
+        return back()->with('status', 'Export Started');
     }
+
+
+    // public function exportRecord(Request $request)
+    // {
+    //     $schoolyear_id = $request->input('schoolyear_id');
+    //     $college_id = $request->input('college_id');
+    //     $program_id = $request->input('program_id');
+    //     $yearlevel_id = $request->input('yearlevel_id');
+    //     $status = $request->input('status');
+
+    //     // Start with a base query
+    //     $query = Enrollment::query();
+
+    //     // Add filters conditionally
+    //     if ($schoolyear_id) {
+    //         $query->where('schoolyear_id', $schoolyear_id);
+    //     }
+
+    //     if ($college_id) {
+    //         $query->where('college_id', $college_id);
+    //     }
+
+    //     if ($program_id) {
+    //         $query->where('program_id', $program_id);
+    //     }
+
+    //     if ($yearlevel_id) {
+    //         $query->where('yearlevel_id', $yearlevel_id);
+    //     }
+
+    //     // Handle status filtering
+    //     if ($status === 'paid') {
+    //         $query->where('status', 'paid');
+    //     } elseif ($status === 'not_paid') {
+    //         $query->whereNull('status');
+    //     }
+
+    //     // Get the results
+    //     $payments = $query->get(); // Use get() to retrieve ALL records
+
+    //     // Check if any records exist
+    //     if ($payments->isNotEmpty()) {
+
+    //         // Generate the PDF with all records using SnappyPdf
+
+    //         $pdf = SnappyPdf::loadView('pdf.print_report', ['payments' => $payments]);
+
+    //         // Stream the PDF to the browser
+    //         return $pdf->download('Student-Payment-Information-Export.pdf');
+    //     } else {
+    //         // Notify if no record exists
+    //         Notification::make()
+    //             ->title('No invoice record found!')
+    //             ->danger()
+    //             ->send();
+
+    //         return redirect()->back();
+    //     }
+    // }
+
+    // public function exportRecordtoPdf(Request $request)
+    // {
+    //     $startDate = $request->input('startDate');
+    //     $endDate = $request->input('endDate');
+
+    //     $date_from = null;
+    //     $date_to = null;
+
+    //     // Ensure both startDate and endDate are provided
+    //     if (!empty($startDate) && !empty($endDate)) {
+    //         try {
+    //             // Check if the format is already Y-m-d
+    //             $date_from = \Carbon\Carbon::parse(trim($startDate))->startOfDay();
+    //             $date_to = \Carbon\Carbon::parse(trim($endDate))->endOfDay();
+    //         } catch (\Exception $e) {
+    //             Log::error('Invalid date format: ' . $startDate . ' - ' . $endDate);
+    //             return redirect()->back()->withErrors(['error' => 'Invalid date format.']);
+    //         }
+    //     }
+
+    //     // Start with a base query
+    //     $query = Pay::query();
+
+    //     // Apply date filter if both dates are valid
+    //     if ($date_from && $date_to) {
+    //         $query->whereBetween('created_at', [$date_from, $date_to]);
+    //     }
+
+    //     // Get the results
+    //     $payments = $query->get();
+
+    //     // Check if any records exist
+    //     if ($payments->isNotEmpty()) {
+    //         $pdf = SnappyPdf::loadView(
+    //             'pdf.print_payment_records',
+    //             [
+    //                 'payments' => $payments,
+    //                 'date_from' => $date_from->format('M d, Y'),
+    //                 'date_to' => $date_to->format('M d, Y'),
+    //             ]
+    //         );
+
+    //         return $pdf->download('Student-Payment-Records-Export.pdf');
+    //     } else {
+    //         Notification::make()
+    //             ->title('No invoice record found!')
+    //             ->danger()
+    //             ->send();
+
+    //         return redirect()->back();
+    //     }
+    // }
 
     public function exportRecordtoPdf(Request $request)
     {
+        $user = auth()->user();
+
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
         $date_from = null;
         $date_to = null;
 
-        // Ensure both startDate and endDate are provided
         if (!empty($startDate) && !empty($endDate)) {
             try {
-                // Check if the format is already Y-m-d
                 $date_from = \Carbon\Carbon::parse(trim($startDate))->startOfDay();
                 $date_to = \Carbon\Carbon::parse(trim($endDate))->endOfDay();
             } catch (\Exception $e) {
@@ -208,37 +300,18 @@ class InvoiceController extends Controller
             }
         }
 
-        // Start with a base query
-        $query = Pay::query();
+        // ✅ Dispatch job to queue
+        ExportPaymentRecordsJobsToPdf::dispatch($user, $date_from, $date_to);
 
-        // Apply date filter if both dates are valid
-        if ($date_from && $date_to) {
-            $query->whereBetween('created_at', [$date_from, $date_to]);
-        }
+        // ✅ Notify user export is in progress
+        Notification::make()
+            ->title('PDF Export in Progress')
+            ->body('Your student payment records export is being processed. You will be notified once it is ready for download.')
+            ->info()
+            ->color('info')
+            ->send();
 
-        // Get the results
-        $payments = $query->get();
-
-        // Check if any records exist
-        if ($payments->isNotEmpty()) {
-            $pdf = SnappyPdf::loadView(
-                'pdf.print_payment_records',
-                [
-                    'payments' => $payments,
-                    'date_from' => $date_from->format('M d, Y'),
-                    'date_to' => $date_to->format('M d, Y'),
-                ]
-            );
-
-            return $pdf->download('Student-Payment-Record-Export.pdf');
-        } else {
-            Notification::make()
-                ->title('No invoice record found!')
-                ->danger()
-                ->send();
-
-            return redirect()->back();
-        }
+        return back();
     }
 
 

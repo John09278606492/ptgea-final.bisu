@@ -49,6 +49,27 @@ class EditEnrollment extends EditRecord
         return __('Edit Student Payment');
     }
 
+    protected function afterSave(): void
+    {
+        $enrollment = $this->record; // This is already the Enrollment model
+
+        logger()->info("Processing Enrollment ID: {$enrollment->id}");
+
+        // Get the latest balance
+        $balance = $enrollment->getBalanceAttribute();
+        $numericBalance = str_replace([',', '₱'], '', $balance);
+
+        logger()->info("Enrollment ID: {$enrollment->id}, New Balance: {$numericBalance}");
+
+        if ((float) $numericBalance <= 0) {
+            $enrollment->update(['status' => 'paid']);
+            logger()->info("Enrollment ID {$enrollment->id} marked as 'paid'.");
+        } else {
+            $enrollment->update(['status' => null]);
+            logger()->info("Enrollment ID {$enrollment->id} status reset to NULL.");
+        }
+    }
+
     // protected function getSaveFormAction(): Action
     // {
     //     return Action::make('save')

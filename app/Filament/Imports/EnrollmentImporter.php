@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Filament\Notifications\Notification;
 use Filament\Notifications\Actions\Action;
 use Filament\Actions\Imports\Exceptions;
+use Filament\Forms\Components\Select;
 use Illuminate\Support\HtmlString;
 
 class EnrollmentImporter extends Importer
@@ -89,32 +90,32 @@ class EnrollmentImporter extends Importer
                     return null;
                 })
                 ->rules(['required', 'numeric']),
-            ImportColumn::make('schoolyear')
-                ->label('School Year')
-                ->exampleHeader('School Year')
-                ->requiredMapping()
-                ->relationship(resolveUsing: function (string $state): ?Schoolyear {
-                    return Schoolyear::query()
-                        ->where('schoolyear', $state)
-                        ->first();
-                })
-                ->rules([
-                    'required',
-                    'regex:/^\d{4} - \d{4}$/',
-                    function ($attribute, $value, $fail) {
-                        // Extract years
-                        [$firstYear, $secondYear] = explode(' - ', $value);
+            // ImportColumn::make('schoolyear')
+            //     ->label('School Year')
+            //     ->exampleHeader('School Year')
+            //     ->requiredMapping()
+            //     ->relationship(resolveUsing: function (string $state): ?Schoolyear {
+            //         return Schoolyear::query()
+            //             ->where('schoolyear', $state)
+            //             ->first();
+            //     })
+            //     ->rules([
+            //         'required',
+            //         'regex:/^\d{4} - \d{4}$/',
+            //         function ($attribute, $value, $fail) {
+            //             // Extract years
+            //             [$firstYear, $secondYear] = explode(' - ', $value);
 
-                        // Convert to integers
-                        $firstYear = (int) $firstYear;
-                        $secondYear = (int) $secondYear;
+            //             // Convert to integers
+            //             $firstYear = (int) $firstYear;
+            //             $secondYear = (int) $secondYear;
 
-                        // Validate second year is greater than or equal to first year
-                        if ($secondYear < $firstYear) {
-                            $fail("The second year ({$secondYear}) must be greater than or equal to the first year ({$firstYear}).");
-                        }
-                    },
-                ]),
+            //             // Validate second year is greater than or equal to first year
+            //             if ($secondYear < $firstYear) {
+            //                 $fail("The second year ({$secondYear}) must be greater than or equal to the first year ({$firstYear}).");
+            //             }
+            //         },
+            //     ]),
             ImportColumn::make('status')
                 ->label('Status')
                 ->exampleHeader('Status')
@@ -146,186 +147,202 @@ class EnrollmentImporter extends Importer
         }
     }
 
-    public function resolveRecord(): ?Enrollment
-    {
-        $this->loadLookups();
-
-        // Find or create College
-        $college = $this->colleges->firstWhere(function ($college) {
-            return strtolower($college->college) === strtolower($this->data['college']);
-        });
-        if (!$college) {
-            $college = College::create(['college' => $this->data['college']]);
-            $this->colleges->push($college);
-        }
-
-        // Find or create Program
-        $program = $this->programs
-            ->where('college_id', $college->id)
-            ->firstWhere(function ($program) {
-                return strtolower($program->program) === strtolower($this->data['program']);
-            });
-        if (!$program) {
-            $program = Program::create(['college_id' => $college->id, 'program' => $this->data['program']]);
-            $this->programs->push($program);
-        }
-
-        // Find or create Yearlevel
-        $yearlevel = $this->yearlevels
-            ->where('program_id', $program->id)
-            ->firstWhere('yearlevel', $this->data['yearlevel']);
-        if (!$yearlevel) {
-            $yearlevel = Yearlevel::create(['program_id' => $program->id, 'yearlevel' => $this->data['yearlevel']]);
-            $this->yearlevels->push($yearlevel);
-        }
-
-        // Find Schoolyear
-        $schoolyear = $this->schoolyears->firstWhere('schoolyear', $this->data['schoolyear']);
-        if (!$schoolyear) {
-            throw new RowImportFailedException('No school year found');
-        }
-
-        // Find Student
-        $student = $this->students->firstWhere('studentidn', $this->data['stud']);
-        if (!$student) {
-            throw new RowImportFailedException('No student idn found');
-        }
-
-        // Prepare Enrollment data
-        $enrollmentData = [
-            'stud_id' => $student->id,
-            'schoolyear_id' => $schoolyear->id,
-            'college_id' => $college->id,
-            'program_id' => $program->id,
-            'yearlevel_id' => $yearlevel->id,
-        ];
-
-        // Find or create Enrollment
-        $enrollment = Enrollment::firstOrNew(
-            ['stud_id' => $student->id, 'schoolyear_id' => $schoolyear->id],
-            $enrollmentData
-        );
-
-        // Handle Semester and Collection relationships
-        if ($schoolyear) {
-            $semesters = $this->semesters->where('schoolyear_id', $schoolyear->id);
-
-            // Prepare semester and collection relationships
-            $semesterRelations = $semesters->map(function ($semester) {
-                return ['semester_id' => $semester->id];
-            });
-
-            $collectionRelations = $semesters->flatMap(function ($semester) {
-                return $this->collections
-                    ->where('semester_id', $semester->id)
-                    ->map(function ($collection) {
-                        return ['collection_id' => $collection->id];
-                    });
-            });
-
-            // Attach relationships to the Enrollment model
-            $enrollment->semesters()->sync($semesterRelations->pluck('semester_id')->toArray());
-            $enrollment->collections()->sync($collectionRelations->pluck('collection_id')->toArray());
-        }
-
-        // Save the Enrollment model with all relationships
-        $enrollment->save();
-
-        return $enrollment;
-    }
-
     // public function resolveRecord(): ?Enrollment
     // {
     //     $this->loadLookups();
 
+    //     // Find or create College
     //     $college = $this->colleges->firstWhere(function ($college) {
     //         return strtolower($college->college) === strtolower($this->data['college']);
     //     });
-
-    //     if (! $college) {
+    //     if (!$college) {
     //         $college = College::create(['college' => $this->data['college']]);
     //         $this->colleges->push($college);
     //     }
 
+    //     // Find or create Program
     //     $program = $this->programs
     //         ->where('college_id', $college->id)
     //         ->firstWhere(function ($program) {
     //             return strtolower($program->program) === strtolower($this->data['program']);
     //         });
-    //     if (! $program) {
+    //     if (!$program) {
     //         $program = Program::create(['college_id' => $college->id, 'program' => $this->data['program']]);
     //         $this->programs->push($program);
     //     }
 
+    //     // Find or create Yearlevel
     //     $yearlevel = $this->yearlevels
     //         ->where('program_id', $program->id)
     //         ->firstWhere('yearlevel', $this->data['yearlevel']);
-    //     if (! $yearlevel) {
+    //     if (!$yearlevel) {
     //         $yearlevel = Yearlevel::create(['program_id' => $program->id, 'yearlevel' => $this->data['yearlevel']]);
     //         $this->yearlevels->push($yearlevel);
     //     }
 
+    //     // Find Schoolyear
     //     $schoolyear = $this->schoolyears->firstWhere('schoolyear', $this->data['schoolyear']);
-    //     if (! $schoolyear) {
+    //     if (!$schoolyear) {
     //         throw new RowImportFailedException('No school year found');
     //     }
 
+    //     // Find Student
     //     $student = $this->students->firstWhere('studentidn', $this->data['stud']);
-    //     if (! $student) {
+    //     if (!$student) {
     //         throw new RowImportFailedException('No student idn found');
     //     }
 
+    //     // Prepare Enrollment data
+    //     $enrollmentData = [
+    //         'stud_id' => $student->id,
+    //         'schoolyear_id' => $schoolyear->id,
+    //         'college_id' => $college->id,
+    //         'program_id' => $program->id,
+    //         'yearlevel_id' => $yearlevel->id,
+    //     ];
+
+    //     // Find or create Enrollment
     //     $enrollment = Enrollment::firstOrNew(
-    //         [
-    //             'stud_id' => $student->id,
-    //             'schoolyear_id' => $schoolyear->id,
-    //         ],
-    //         [
-    //             'college_id' => $college->id,
-    //             'program_id' => $program->id,
-    //             'yearlevel_id' => $yearlevel->id,
-    //         ]
+    //         ['stud_id' => $student->id, 'schoolyear_id' => $schoolyear->id],
+    //         $enrollmentData
     //     );
 
-    //     $enrollment->save();
-
-    //     $enrollmentId = $enrollment->id;
-
+    //     // Handle Semester and Collection relationships
     //     if ($schoolyear) {
-    //         $semester = $this->semesters->where('schoolyear_id', $schoolyear->id);
-    //         $existingEntry = DB::table('enrollment_semester')->where('enrollment_id', $enrollmentId)->exists();
+    //         $semesters = $this->semesters->where('schoolyear_id', $schoolyear->id);
 
-    //         if ($existingEntry) {
-    //             DB::table('enrollment_semester')->where('enrollment_id', $enrollmentId)->delete();
-    //         }
+    //         // Prepare semester and collection relationships
+    //         $semesterRelations = $semesters->map(function ($semester) {
+    //             return ['semester_id' => $semester->id];
+    //         });
 
-    //         foreach ($semester as $semester1) {
-    //             DB::table('enrollment_semester')->insert([
-    //                 'enrollment_id' => $enrollmentId,
-    //                 'semester_id' => $semester1->id,
-    //             ]);
+    //         $collectionRelations = $semesters->flatMap(function ($semester) {
+    //             return $this->collections
+    //                 ->where('semester_id', $semester->id)
+    //                 ->map(function ($collection) {
+    //                     return ['collection_id' => $collection->id];
+    //                 });
+    //         });
 
-    //         }
-
-    //         if ($semester) {
-    //             $existingEntry1 = DB::table('collection_enrollment')->where('enrollment_id', $enrollmentId)->exists();
-    //             if ($existingEntry1) {
-    //                 DB::table('collection_enrollment')->where('enrollment_id', $enrollmentId)->delete();
-    //             }
-    //             foreach ($semester as $semester1) {
-    //                 $collection = $this->collections->where('semester_id', $semester1->id);
-    //                 foreach ($collection as $collection1) {
-    //                     DB::table('collection_enrollment')->insert([
-    //                         'enrollment_id' => $enrollmentId,
-    //                         'collection_id' => $collection1->id,
-    //                     ]);
-    //                 }
-    //             }
-    //         }
+    //         // Attach relationships to the Enrollment model
+    //         $enrollment->semesters()->sync($semesterRelations->pluck('semester_id')->toArray());
+    //         $enrollment->collections()->sync($collectionRelations->pluck('collection_id')->toArray());
     //     }
+
+    //     // Save the Enrollment model with all relationships
+    //     $enrollment->save();
 
     //     return $enrollment;
     // }
+
+    public static function getOptionsFormComponents(): array
+    {
+        return [
+            Select::make('schoolyear_id')
+                ->label('School Year')
+                ->options(Schoolyear::pluck('schoolyear', 'id')) // Fetch school years
+                ->required(), // Ensure the user selects a school year
+        ];
+    }
+
+
+    public function resolveRecord(): ?Enrollment
+    {
+        $this->loadLookups();
+
+        $schoolyearId = $this->options['schoolyear_id'] ?? null;
+
+        if (!$schoolyearId) {
+            throw new \Exception('No school year selected.');
+        }
+
+        $college = $this->colleges->firstWhere(function ($college) {
+            return strtolower($college->college) === strtolower($this->data['college']);
+        });
+
+        if (! $college) {
+            $college = College::create(['college' => $this->data['college']]);
+            $this->colleges->push($college);
+        }
+
+        $program = $this->programs
+            ->where('college_id', $college->id)
+            ->firstWhere(function ($program) {
+                return strtolower($program->program) === strtolower($this->data['program']);
+            });
+        if (! $program) {
+            $program = Program::create(['college_id' => $college->id, 'program' => $this->data['program']]);
+            $this->programs->push($program);
+        }
+
+        $yearlevel = $this->yearlevels
+            ->where('program_id', $program->id)
+            ->firstWhere('yearlevel', $this->data['yearlevel']);
+        if (! $yearlevel) {
+            $yearlevel = Yearlevel::create(['program_id' => $program->id, 'yearlevel' => $this->data['yearlevel']]);
+            $this->yearlevels->push($yearlevel);
+        }
+
+        // $schoolyear = $this->schoolyears->firstWhere('schoolyear', $this->data['schoolyear']);
+        // if (! $schoolyear) {
+        //     throw new RowImportFailedException('No school year found');
+        // }
+
+        $student = $this->students->firstWhere('studentidn', $this->data['stud']);
+        if (! $student) {
+            throw new RowImportFailedException('No student idn found');
+        }
+
+        $enrollment = Enrollment::firstOrNew(
+            [
+                'stud_id' => $student->id,
+                'schoolyear_id' => $schoolyearId,
+            ],
+            [
+                'college_id' => $college->id,
+                'program_id' => $program->id,
+                'yearlevel_id' => $yearlevel->id,
+            ]
+        );
+
+        $enrollment->save();
+
+        $enrollmentId = $enrollment->id;
+
+        if ($schoolyearId) {
+            $semester = $this->semesters->where('schoolyear_id', $schoolyearId);
+            $existingEntry = DB::table('enrollment_semester')->where('enrollment_id', $enrollmentId)->exists();
+
+            if ($existingEntry) {
+                DB::table('enrollment_semester')->where('enrollment_id', $enrollmentId)->delete();
+            }
+
+            foreach ($semester as $semester1) {
+                DB::table('enrollment_semester')->insert([
+                    'enrollment_id' => $enrollmentId,
+                    'semester_id' => $semester1->id,
+                ]);
+            }
+
+            if ($semester) {
+                $existingEntry1 = DB::table('collection_enrollment')->where('enrollment_id', $enrollmentId)->exists();
+                if ($existingEntry1) {
+                    DB::table('collection_enrollment')->where('enrollment_id', $enrollmentId)->delete();
+                }
+                foreach ($semester as $semester1) {
+                    $collection = $this->collections->where('semester_id', $semester1->id);
+                    foreach ($collection as $collection1) {
+                        DB::table('collection_enrollment')->insert([
+                            'enrollment_id' => $enrollmentId,
+                            'collection_id' => $collection1->id,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $enrollment;
+    }
 
     // public static function getCompletedNotificationBody(Import $import): string
     // {
@@ -374,6 +391,12 @@ class EnrollmentImporter extends Importer
                 ->danger()
                 ->sendToDatabase($recipient);
         }
+
+        Notification::make()
+            ->title('Import completed')
+            ->body($body)
+            ->success()
+            ->sendToDatabase($recipient);
 
         return $body;
     }

@@ -5,7 +5,12 @@ namespace App\Filament\Resources\EnrollmentResource\RelationManagers;
 use App\Models\Pay;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Actions\Modal\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms;
+use Filament\Forms\Components\Actions\Action as ActionsAction;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -21,6 +26,8 @@ use stdClass;
 use Filament\Notifications\Notification;
 use Illuminate\Support\HtmlString;
 use Filament\Notifications\Events\DatabaseNotificationsSent;
+use FontLib\Table\Type\name;
+use Illuminate\Support\Facades\Log;
 
 class PaysRelationManager extends RelationManager
 {
@@ -34,49 +41,209 @@ class PaysRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('amount')
-                    ->mask(RawJs::make('$money($input)'))
-                    ->stripCharacters(',')
-                    ->extraInputAttributes([
-                        'onInput' => 'this.value = this.value.replace(/[^\d.]/g, "").replace(/(\..*?)\.+/g, "$1").replace(/\B(?=(\d{3})+(?!\d))/g, ",")',
+                Grid::make()
+                    ->schema([
+                        // Remaining Balance Display
+                        Forms\Components\TextInput::make('balance')
+                            ->label('Remaining Balance')
+                            ->prefixIcon('heroicon-m-peso-symbol')
+                            ->default(fn($livewire) => $livewire->ownerRecord?->getBalanceAttribute() ?? '₱0.00')
+                            ->dehydrated(false)
+                            ->disabled(),
                     ])
-                    ->numeric()
-                    ->prefixIcon('heroicon-m-peso-symbol')
-                    ->required()
-                    ->rules([
-                        function () {
-                            return function ($attribute, $value, $fail) {
+                    ->columnStart(1),
+
+                Section::make('Payment Details')
+                    ->schema([
+                        // Amount Input
+                        Forms\Components\TextInput::make('amount')
+                            ->mask(RawJs::make('$money($input)'))
+                            ->required()
+                            ->label('Enter Amount')
+                            ->stripCharacters(',')
+                            ->extraInputAttributes([
+                                'onInput' => 'this.value = this.value.replace(/[^\d.]/g, "").replace(/(\..*?)\.+/g, "$1").replace(/\B(?=(\d{3})+(?!\d))/g, ",")',
+                            ])
+                            ->numeric()
+                            ->prefixIcon('heroicon-m-peso-symbol')
+                            ->required()
+                            ->rules([
+                                function () {
+                                    return function ($attribute, $value, $fail) {
+                                        $parentModel = $this->getRelationship()->getParent();
+
+                                        if (method_exists($parentModel, 'getBalanceAttribute')) {
+                                            $balance = $parentModel->getBalanceAttribute();
+                                            $numericBalance = (float) str_replace([',', '₱'], '', $balance);
+
+                                            if ($numericBalance <= 0) {
+                                                $fail('Fully Paid! Remaining balance is: ₱' . number_format($numericBalance, 2));
+                                            }
+                                        } else {
+                                            $fail('Balance validation failed due to missing method.');
+                                        }
+                                    };
+                                },
+                            ])
+                            ->dehydrateStateUsing(function ($state) {
                                 $parentModel = $this->getRelationship()->getParent();
 
                                 if (method_exists($parentModel, 'getBalanceAttribute')) {
                                     $balance = $parentModel->getBalanceAttribute();
-
                                     $numericBalance = (float) str_replace([',', '₱'], '', $balance);
 
-                                    if ($numericBalance <= 0) {
-                                        $fail('Fully Paid! Remaining balance is: ₱' . number_format($numericBalance, 2));
+                                    if ($numericBalance > 0) {
+                                        return min((float) str_replace(',', '', $state), $numericBalance);
                                     }
-                                } else {
-                                    $fail('Balance validation failed due to missing method.');
                                 }
-                            };
-                        },
+                                return (float) str_replace(',', '', $state);
+                            }),
+
+                        // Payment Summary Display
+                        Forms\Components\Textarea::make('payment_summary')
+                            ->default('No payment entered yet.')
+                            ->reactive()
+                            ->disabled()
+                            ->autosize()
+                            ->dehydrated(false),
                     ])
-                    ->dehydrateStateUsing(function ($state) {
-                        $parentModel = $this->getRelationship()->getParent();
+                    ->footerActions([
+                        // Pay Button - Updates Payment Summary
+                        ActionsAction::make('pay')
+                            ->label('Pay')
+                            ->color('primary')
+                            ->action(
+                                function (
+                                    callable $set,
+                                    callable $get,
+                                    $livewire
+                                ) {
+                                    $amount = $get('amount');
 
-                        if (method_exists($parentModel, 'getBalanceAttribute')) {
-                            $balance = $parentModel->getBalanceAttribute();
-                            $numericBalance = (float) str_replace([',', '₱'], '', $balance);
+                                    // Ensure amount is entered
+                                    if (empty($amount) || (float) str_replace(',', '', $amount) <= 0) {
+                                        Notification::make()
+                                            ->title('Please enter a valid amount')
+                                            ->danger()
+                                            ->send();
+                                        return;
+                                    }
 
-                            if ($numericBalance > 0) {
-                                return min((float) str_replace(',', '', $state), $numericBalance);
-                            }
-                        }
-                        return (float) str_replace(',', '', $state);
-                    }),
+                                    // Get balance and convert it to a numeric value
+                                    $balance = $livewire->ownerRecord?->getBalanceAttribute() ?? '₱0.00';
+                                    $numericBalance = (float) str_replace([',', '₱'], '', $balance);
+
+                                    // Prevent payment if balance is already zero or negative
+                                    if ($numericBalance <= 0) {
+                                        Notification::make()
+                                            ->title('Payment Not Allowed')
+                                            ->body('The student is fully paid! No additional payment required.')
+                                            ->danger()
+                                            ->send();
+                                        return;
+                                    }
+
+                                    // Proceed to update the payment summary
+                                    $livewire->updatePaymentSummary($amount, $set, $livewire);
+                                }
+                            ),
+
+                        ActionsAction::make('confirm_payment')
+                            ->label('Confirm Payment')
+                            ->color('success')
+                            ->requiresConfirmation()
+                            ->hidden(fn(callable $get) => empty($get('payment_summary')) || $get('payment_summary') === 'No payment entered yet.')
+                            ->action(function (callable $set, callable $get, $livewire) {
+                                $amount = $get('amount');
+                                $balance = $get('balance');
+
+                                // Convert balance and amount to numeric values
+                                $numericBalance = (float) str_replace([',', '₱'], '', $balance);
+                                $numericAmount = (float) str_replace(',', '', $amount);
+
+                                // ✅ Check if the entered amount is valid
+                                if (empty($amount) || $numericAmount <= 0) {
+                                    Notification::make()
+                                        ->title('Invalid Amount')
+                                        ->body('Please enter a valid amount.')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+
+                                // ✅ Determine the amount to be deducted (prevents overpayment)
+                                $amountDeducted = min($numericBalance, $numericAmount);
+                                $remainingBalance = max(0, $numericBalance - $amountDeducted);
+                                $change = max(0, $numericAmount - $numericBalance);
+
+                                // ✅ Get the parent enrollment
+                                $enrollment = $livewire->getRelationship()->getParent();
+                                if (!$enrollment) {
+                                    logger()->error('No related enrollment found for payment record.');
+                                    Notification::make()
+                                        ->title('Error')
+                                        ->body('No related enrollment found.')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+
+                                // ✅ Save the payment with the **correct deducted amount**
+                                $payment = Pay::create([
+                                    'enrollment_id' => $enrollment->id,
+                                    'amount' => $amountDeducted, // 💡 Only deduct the allowed amount
+                                    'status1' => 'paid',
+                                ]);
+
+                                if (!$payment) {
+                                    logger()->error('Failed to save payment record.');
+                                    Notification::make()
+                                        ->title('Payment Error')
+                                        ->body('Payment could not be saved. Please try again.')
+                                        ->danger()
+                                        ->send();
+                                    return;
+                                }
+
+                                // ✅ Find the recipient (user) based on canId
+                                $recipient = User::where('canId', $enrollment->stud->studentidn)->first();
+                                if ($recipient) {
+                                    Notification::make()
+                                        ->title('Payment Received')
+                                        ->body("Thank you for paying ₱" . number_format($amountDeducted, 2, '.', ',') .
+                                            ". Your remaining balance is ₱" . number_format($remainingBalance, 2))
+                                        ->success()
+                                        ->sendToDatabase($recipient, isEventDispatched: true);
+                                } else {
+                                    logger()->error("No user found with canId: {$enrollment->stud->studentidn}");
+                                }
+
+                                // ✅ Update enrollment status if fully paid
+                                if ($remainingBalance <= 0) {
+                                    DB::table('enrollments')
+                                        ->where('id', $enrollment->id)
+                                        ->update(['status' => 'paid']);
+
+                                    logger()->info('Payment is correct and balance is zero or below.');
+                                } else {
+                                    logger()->info("Remaining balance: {$remainingBalance}");
+                                }
+
+                                // ✅ Clear input fields
+                                $set('amount', '');
+                                $set('payment_summary', 'No payment entered yet.');
+                                $set('balance', $livewire->ownerRecord?->getBalanceAttribute() ?? '₱0.00');
+
+                                // ✅ Show success notification
+                                Notification::make()
+                                    ->title('Payment Successfully Processed')
+                                    ->success()
+                                    ->send();
+                            })
+                    ]),
                 Forms\Components\TextInput::make('status')
                     ->readOnly()
+                    ->hidden()
                     ->default('paid'),
             ]);
     }
@@ -98,7 +265,7 @@ class PaysRelationManager extends RelationManager
                 ),
                 Tables\Columns\TextColumn::make('amount')
                     ->money('PHP'),
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('status1')
                     ->label('Status')
                     ->sortable()
                     ->badge()
@@ -120,9 +287,12 @@ class PaysRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                Tables\Actions\CreateAction::make('create_payment')
                     ->label('New payment')
                     ->modalHeading('Payment Form')
+                    ->closeModalByClickingAway(false)
+                    ->modalSubmitAction(false)
+                    ->modalCancelAction(false)
                     ->modalSubmitActionLabel('Pay')
                     ->disableCreateAnother()
                     ->after(function (Pay $record) {
@@ -259,6 +429,39 @@ class PaysRelationManager extends RelationManager
         //         $enrollment->update(['status' => 'paid']);
         //     }
         // });
+    }
+
+    public function updatePaymentSummary($amountTendered, callable $set, $livewire)
+    {
+        $balance = (float) str_replace([',', '₱'], '', $livewire->ownerRecord?->getBalanceAttribute() ?? '0');
+        $amountTendered = (float) str_replace(',', '', $amountTendered);
+
+        $amountDeducted = min($balance, $amountTendered);
+        $remainingBalance = max(0, $balance - $amountTendered);
+        $change = max(0, $amountTendered - $balance);
+
+        $summary = "Amount Tendered: ₱" . number_format($amountTendered, 2) . "\n" .
+            "Amount Deducted: ₱" . number_format($amountDeducted, 2) . "\n" .
+            "Remaining Balance: ₱" . number_format($remainingBalance, 2) . "\n" .
+            "Change: ₱" . number_format($change, 2);
+
+        $set('payment_summary', $summary);
+    }
+
+    public function handlePayment($data, callable $set)
+    {
+        // Log the payment for debugging
+        Log::info('Payment processed: ', $data);
+
+        // Reset the form fields after payment
+        $set('amount', '');
+        $set('payment_summary', 'No payment entered yet.');
+
+        Notification::make()
+            ->title('Payment successfully processed')
+            ->body('Thank you for your payment.')
+            ->success()
+            ->send();
     }
 
     protected function afterSave(): void

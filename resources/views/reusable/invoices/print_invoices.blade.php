@@ -14,12 +14,12 @@
     $totalPays = $payments->pays->sum('amount');
     $remainingBalance = ($totalCollections + $totalYearLevelPayments) - $totalPays;
 @endphp
+<head>
+    <title>Print Invoice</title>
+</head>
 <div style="width: 350px; margin: 0 auto; padding: 0.5rem; background-color: #fff; border-radius: 0.5rem; color: #333; font-family: DejaVu Sans; font-size: 11px;">
-    <h1 style="margin-bottom: 0.5rem; font-size: 16px; font-weight: bold; text-align: center; color: #000; line-height: 1.2;">INVOICE</h1>
-    <p style="margin-bottom: 0.25rem; text-align: center; font-size: 10px; line-height: 0.5;">PTGEA</p>
-    <p style="margin-bottom: 0.25rem; text-align: center; font-size: 10px; line-height: 0.5;">San Isidro, Calape Bohol</p>
-    <p style="margin-bottom: 0.25rem; text-align: center; font-size: 10px; line-height: 0.5;">6328</p>
-    <p style="margin-bottom: 0.25rem; text-align: center; font-size: 10px; line-height: 0.5;">0927 860 6492</p>
+    <h1 style="margin-bottom: 0.5rem; font-size: 16px; font-weight: bold; text-align: right; color: #000; line-height: 1.2;">INVOICE</h1>
+    <p style="margin-bottom: 0.25rem; text-align: right; font-size: 10px; line-height: 0.5;">BISU Calape PTGEA MS</p>
 
     <div style="padding: 0.10rem 0.75rem; line-height: .80;">
         <h2 style="margin-bottom: 0.5rem; font-size: 15px; font-weight: bold;">Student Information</h2>

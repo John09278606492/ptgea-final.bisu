@@ -9,10 +9,7 @@
 
     <div class="p-6 bg-white rounded-lg shadow dark:bg-gray-800 dark:text-gray-200">
         <h1 class="mb-6 text-2xl font-bold text-right dark:text-white">INVOICE</h1>
-        <p class="mb-6 text-right text-.5xl dark:text-white">PTGEA</p>
-        <p class="mb-6 text-right text-.5xl dark:text-white">San Isidro, Calape Bohol</p>
-        <p class="mb-6 text-right text-.5xl dark:text-white">6328</p>
-        <p class="mb-6 text-right text-.5xl dark:text-white">0927 860 6492</p>
+        <p class="mb-6 text-right text-.5xl dark:text-white">BISU Calape PTGEA MS</p>
 
         <div class="p-4 mb-6">
             <h2 class="mb-4 text-xl font-semibold dark:text-white">Student Information</h2>

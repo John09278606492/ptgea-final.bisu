@@ -14,7 +14,7 @@
     <div style="width: 100%; margin-bottom: 100px;">
         <!-- Left Logo -->
         <div style="float: left; width: 17%; text-align: left;">
-            <img src="{{ asset('images/bisu logo2.png') }}" alt="BISU Logo" style="height: 6rem;">
+            <img src="{{ public_path('images/bisu logo2.png') }}" alt="BISU Logo" style="height: 6rem;">
         </div>
 
         <!-- Text in the Center -->
@@ -22,22 +22,22 @@
             <h3 style="margin: 0;">Republic of the Philippines</h3>
             <h3 style="margin: 0;">BOHOL ISLAND STATE UNIVERSITY</h3>
             <h3 style="margin: 0;">San Isidro, Calape, Bohol</h3>
-            <h4 style="margin: 0;">Parents Teachers Guardians & Employees Association</h4>
+            <h4 style="margin: 0;">Parents, Teachers, Guardians & Employees Association</h4>
             <p style="margin: 0;">Balance | Integrity | Stewardship | Uprightness</p>
         </div>
 
         <!-- Right Logo -->
         <div style="float: left; width: 23%; text-align: center;">
-            <img src="{{ asset('images/bagong_pilipinas.png') }}" alt="BISU Logo" style="height: 6rem;">
+            <img src="{{ public_path('images/bagong_pilipinas.png') }}" alt="BISU Logo" style="height: 6rem;">
         </div>
         <div style="float: left; width: 23%; text-align: center;">
-            <img src="{{ asset('images/tuv logo.png') }}" alt="BISU Logo" style="height: 6rem;">
+            <img src="{{ public_path('images/tuv logo.png') }}" alt="BISU Logo" style="height: 6rem;">
         </div>
     </div>
 
 
     <div style="width: 100%; margin: 0 auto; padding: 0.5rem; background-color: #fff; border-radius: 0.5rem;">
-        <h2 style="margin-bottom: 1rem; font-size: 20px; text-align: center; font-weight: bold;">Students' Payment Records Table</h2>
+        <h2 style="margin-bottom: 1rem; font-size: 20px; text-align: center; font-weight: bold;">Student Payment Records</h2>
 
         <p style="font-size: 12px; font-weight: bold; text-align: left; margin-bottom: 1rem;">
             Date Range: {{ $date_from ?? 'N/A' }} - {{ $date_to ?? 'N/A' }}

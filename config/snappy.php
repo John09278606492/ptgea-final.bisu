@@ -37,7 +37,11 @@ return [
         'enabled' => true,
         'binary'  => base_path('vendor/h4cc/wkhtmltopdf-amd64/bin/wkhtmltopdf.exe'),
         'timeout' => false,
-        'options' => [],
+        'options' => [
+            'enable-local-file-access' => true, // ✅ Allow local file access
+            'no-stop-slow-scripts' => true, // Prevent script timeout
+            'disable-smart-shrinking' => true, // Prevent content scaling issues
+        ],
         'env'     => [],
     ],
 
@@ -45,7 +49,11 @@ return [
         'enabled' => true,
         'binary'  => base_path('vendor/h4cc/wkhtmltoimage-amd64/bin/wkhtmltoimage.exe'),
         'timeout' => false,
-        'options' => [],
+        'options' => [
+            'enable-local-file-access' => true, // ✅ Allow local file access
+            'no-stop-slow-scripts' => true, // Prevent script timeout
+            'disable-smart-shrinking' => true, // Prevent content scaling issues
+        ],
         'env'     => [],
     ],
 

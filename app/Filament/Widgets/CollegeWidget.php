@@ -61,10 +61,20 @@ class CollegeWidget extends ChartWidget
                     'label' => 'No. of students',
                     'data' => $data, // Data of student counts per program
                     'backgroundColor' => [
-                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF',
+                        '#FF9F40',
                     ],
                     'hoverBackgroundColor' => [
-                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF',
+                        '#FF9F40',
                     ],
                 ],
             ],

@@ -16,6 +16,8 @@ class StudImporter extends Importer
 {
     protected static ?string $model = Stud::class;
 
+
+
     public static function getColumns(): array
     {
         return [
@@ -23,7 +25,7 @@ class StudImporter extends Importer
                 ->label('Student IDN')
                 ->exampleHeader('Student IDN')
                 ->requiredMapping()
-                ->rules(['required', 'numeric', 'min:5', 'max:255']),
+                ->rules(['required', 'numeric']),
             ImportColumn::make('firstname')
                 ->label('First Name')
                 ->exampleHeader('First Name')
@@ -67,8 +69,7 @@ class StudImporter extends Importer
         return [
             'studentidn.required' => 'The Student IDN field is required.',
             'studentidn.numeric' => 'Student IDN must be a numeric value.',
-            'studentidn.min' => 'Student IDN must be atleast 5 digits but not greater than 255 digits.',
-            'studentidn.max' => 'Student IDN must be atleast 5 digits but not greater than 255 digits.',
+            'studentidn.max' => 'Student IDN must not greater than 255 digits.',
             'firstname.required' => 'The First Name field is required.',
             'firstname.regex' => 'The First Name must contain only letters, dashes and spaces.',
             'middlename.regex' => 'The Middle Name must contain only letters, dashes and spaces.',
@@ -125,6 +126,12 @@ class StudImporter extends Importer
                 ->danger()
                 ->sendToDatabase($recipient);
         }
+
+        Notification::make()
+            ->title('Import completed')
+            ->body($body)
+            ->success()
+            ->sendToDatabase($recipient);
 
         return $body;
     }

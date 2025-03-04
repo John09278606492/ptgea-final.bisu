@@ -24,9 +24,8 @@ class UserImporter extends Importer
             ImportColumn::make('canId')
                 ->label('Student IDN')
                 ->exampleHeader('Student IDN')
-                ->numeric()
                 ->requiredMapping()
-                ->rules(['required', 'max:255']),
+                ->rules(['required', 'numeric']),
             ImportColumn::make('firstname')
                 ->label('First Name')
                 ->exampleHeader('First Name')
@@ -64,6 +63,7 @@ class UserImporter extends Importer
     {
         return [
             'canId.required' => 'The Student IDN field is required.',
+            'canId.numeric' => 'Student IDN must be a numeric value.',
             'firstname.required' => 'The First Name field is required.',
             'firstname.regex' => 'The First Name must contain only letters, dashes and spaces.',
             'middlename.regex' => 'The Middle Name must contain only letters, dashes and spaces.',
@@ -128,6 +128,12 @@ class UserImporter extends Importer
                 ->danger()
                 ->sendToDatabase($recipient);
         }
+
+        Notification::make()
+            ->title('Import completed')
+            ->body($body)
+            ->success()
+            ->sendToDatabase($recipient);
 
         return $body;
     }

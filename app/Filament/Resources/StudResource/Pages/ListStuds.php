@@ -6,8 +6,12 @@ use App\Filament\Imports\EnrollmentImporter;
 use App\Filament\Imports\StudImporter;
 use App\Filament\Resources\StudResource;
 use App\Filament\Resources\StudResource\Widgets\TotalWidget;
+use App\Jobs\BulkImportStudents;
+use App\Models\Schoolyear;
 use Filament\Actions;
 use Filament\Actions\ImportAction;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -26,12 +30,16 @@ class ListStuds extends ListRecords
                 ->label('Bulk add student')
                 ->color('warning')
                 ->icon('heroicon-m-user-group')
+                ->closeModalByClickingAway(false)
+                ->modalHeading('Bulk add student')
                 ->importer(StudImporter::class),
             ImportAction::make('importEnrollment')
                 ->label('Bulk enroll student')
                 ->color('success')
+                ->closeModalByClickingAway(false)
+                ->modalHeading('Bulk enroll student')
                 ->icon('heroicon-m-user-group')
-                ->importer(EnrollmentImporter::class),
+                ->importer(EnrollmentImporter::class)
         ];
     }
 

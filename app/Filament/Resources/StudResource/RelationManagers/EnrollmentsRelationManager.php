@@ -52,7 +52,7 @@ class EnrollmentsRelationManager extends RelationManager
                         Forms\Components\TextInput::make('stud_id')
                             ->hidden()
                             ->reactive()
-                            ->default(fn (RelationManager $livewire) => $livewire->ownerRecord->id),
+                            ->default(fn(RelationManager $livewire) => $livewire->ownerRecord->id),
                         Forms\Components\Select::make('college_id')
                             ->label('College')
                             ->options(College::all()->pluck('college', 'id'))
@@ -67,7 +67,7 @@ class EnrollmentsRelationManager extends RelationManager
                             ->required(),
                         Forms\Components\Select::make('program_id')
                             ->label('Program')
-                            ->options(fn (Get $get): Collection => Program::query()
+                            ->options(fn(Get $get): Collection => Program::query()
                                 ->where('college_id', $get('college_id'))
                                 ->pluck('program', 'id'))
                             ->searchable()
@@ -80,29 +80,29 @@ class EnrollmentsRelationManager extends RelationManager
                             ->required(),
                         Forms\Components\Select::make('yearlevel_id')
                             ->label('Year Level')
-                            ->options(fn (Get $get): Collection => Yearlevel::query()
+                            ->options(fn(Get $get): Collection => Yearlevel::query()
                                 ->where('program_id', $get('program_id'))
                                 ->pluck('yearlevel', 'id'))
                             ->searchable()
                             ->preload()
                             ->reactive()
-                            ->afterStateUpdated(fn (Set $set) => $set('yearlevelpayment_id', []))
+                            ->afterStateUpdated(fn(Set $set) => $set('yearlevelpayment_id', []))
                             ->required(),
                         CheckboxList::make('yearlevelpayment_id')
                             ->label('Year Level Fee Type')
                             ->inlineLabel()
                             ->relationship('yearlevelpayments', 'amount')
-                            ->options(fn (Get $get): array => Yearlevelpayments::query()
-                                ->where('yearlevel_id', $get('yearlevel_id'))
+                            ->options(fn(Get $get): array => Yearlevelpayments::query()
+                                ->where('yearlevel_id1', $get('yearlevel_id'))
                                 ->get()
-                                ->mapWithKeys(fn ($payment) => [
-                                    $payment->id => '₱'.number_format($payment->amount, 2),
+                                ->mapWithKeys(fn($payment) => [
+                                    $payment->id => '₱' . number_format($payment->amount, 2),
                                 ])
                                 ->toArray())
-                            ->descriptions(fn (Get $get): array => Yearlevelpayments::query()
-                                ->where('yearlevel_id', $get('yearlevel_id'))
+                            ->descriptions(fn(Get $get): array => Yearlevelpayments::query()
+                                ->where('yearlevel_id1', $get('yearlevel_id'))
                                 ->get()
-                                ->mapWithKeys(fn ($payment) => [
+                                ->mapWithKeys(fn($payment) => [
                                     $payment->id => new HtmlString(
                                         $payment->description
                                             ? e($payment->description)
@@ -129,20 +129,21 @@ class EnrollmentsRelationManager extends RelationManager
                                         $set('collection_id', []);
                                     })
                                     ->required()
-                                    ->unique(modifyRuleUsing: function (Unique $rule, callable $get) {
-                                        $studId = $get('stud_id');
-                                        $collegeId = $get('college_id');
-                                        $programId = $get('program_id');
-                                        $yearlevelId = $get('yearlevel_id');
-                                        $schoolyearId = $get('schoolyear_id');
+                                    ->unique(
+                                        modifyRuleUsing: function (Unique $rule, callable $get) {
+                                            $studId = $get('stud_id');
+                                            $collegeId = $get('college_id');
+                                            $programId = $get('program_id');
+                                            $yearlevelId = $get('yearlevel_id');
+                                            $schoolyearId = $get('schoolyear_id');
 
-                                        return $rule
-                                            ->where('stud_id', $studId)
-                                            ->where('college_id', $collegeId)
-                                            ->where('program_id', $programId)
-                                            ->where('yearlevel_id', $yearlevelId)
-                                            ->where('schoolyear_id', $schoolyearId);
-                                    },
+                                            return $rule
+                                                ->where('stud_id', $studId)
+                                                ->where('college_id', $collegeId)
+                                                ->where('program_id', $programId)
+                                                ->where('yearlevel_id', $yearlevelId)
+                                                ->where('schoolyear_id', $schoolyearId);
+                                        },
                                         ignoreRecord: true,
                                     )
                                     ->validationMessages([
@@ -154,7 +155,7 @@ class EnrollmentsRelationManager extends RelationManager
                             ->label('Semester')
                             ->inlineLabel()
                             ->relationship('semesters', 'semester')
-                            ->options(fn (Get $get): array => Semester::query()
+                            ->options(fn(Get $get): array => Semester::query()
                                 ->where('schoolyear_id', $get('schoolyear_id'))
                                 ->pluck('semester', 'id')
                                 ->toArray())
@@ -168,24 +169,24 @@ class EnrollmentsRelationManager extends RelationManager
                             ->label('Semester Fee Type')
                             ->inlineLabel()
                             ->relationship('collections', 'amount') // Adjusted to match the relationship name and attribute in your model
-                            ->options(fn (Get $get): array => ModelsCollection::query()
+                            ->options(fn(Get $get): array => ModelsCollection::query()
                                 ->whereIn('semester_id', $get('semester_id'))
                                 ->get()
-                                ->mapWithKeys(fn ($collection) => [
-                                    $collection->id => '₱'.number_format($collection->amount, 2), // Only amount here
+                                ->mapWithKeys(fn($collection) => [
+                                    $collection->id => '₱' . number_format($collection->amount, 2), // Only amount here
                                 ])
                                 ->toArray())
-                            ->descriptions(fn (Get $get): array => ModelsCollection::query()
+                            ->descriptions(fn(Get $get): array => ModelsCollection::query()
                                 ->whereIn('semester_id', $get('semester_id'))
                                 ->with('semester') // Eager load the semester relationship
                                 ->get()
-                                ->mapWithKeys(fn ($collection) => [
+                                ->mapWithKeys(fn($collection) => [
                                     $collection->id => new HtmlString(
                                         ($collection->description
                                             ? e($collection->description)
                                             : '<em>No description available.</em>') // Payment description
-                                        .'<br>'
-                                        .'<small>Semester: '.e(optional($collection->semester)->semester ?? 'Unknown Semester').'</small>' // Add semester type
+                                            . '<br>'
+                                            . '<small>Semester: ' . e(optional($collection->semester)->semester ?? 'Unknown Semester') . '</small>' // Add semester type
                                     ),
                                 ])
                                 ->toArray())

@@ -28,6 +28,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
 use DutchCodingCompany\FilamentSocialite\Provider;
+use Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -52,7 +53,8 @@ class AdminPanelProvider extends PanelProvider
                         // ->scopes(['...'])
                         // ->with(['...']),
                     ])
-                    ->registration(true)
+                    ->registration(true),
+                FilamentProgressbarPlugin::make()->color('#29b')
             )
             // ->brandLogo(asset('images/ptgea_logo.png'))
             // ->brandLogo(fn () => view('brandname'))

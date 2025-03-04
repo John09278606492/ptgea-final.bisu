@@ -14,7 +14,7 @@ class Pay extends Model
     protected $fillable = [
         'enrollment_id',
         'amount',
-        'status',
+        'status1',
     ];
 
     public function enrollment(): BelongsTo

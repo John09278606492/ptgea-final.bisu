@@ -2,12 +2,16 @@
 
 use App\Filament\Pages\StudentInformation;
 use App\Http\Controllers\AllExportController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\Exportstudentpayment;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\PaymentController;
 use App\Models\Pay;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,3 +73,15 @@ Route::get('/students-export-payment/{college_id?}/{program_id?}/{yearlevel_id?}
 
 Route::get('/students-payments-records', [PaymentController::class, 'export'])
     ->name('EXPORT.STUDENT.PAYMENT.RECORD');
+
+// Route::get('/exports/download', [ExportController::class, 'download'])->name('exports.download');
+
+Route::get('/exports/{file}/download', function ($file) {
+    $filePath = 'exports/' . $file;
+
+    if (!Storage::disk('local')->exists($filePath)) {
+        abort(404);
+    }
+
+    return Response::download(storage_path('app/' . $filePath));
+})->name('exports.download');

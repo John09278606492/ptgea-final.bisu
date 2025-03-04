@@ -3,16 +3,20 @@
 namespace App\Exports;
 
 use App\Models\Enrollment;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithDrawings;
+use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
-class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize, WithEvents, FromQuery
+class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize, WithEvents, FromQuery, WithDrawings, WithCustomStartCell
 {
     use Exportable;
 
@@ -56,12 +60,16 @@ class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize,
             $query->whereNull('status');
         } elseif ($this->status === '' || $this->status === null) {
             $query->where(function ($query) {
-                $query->whereNull('status')
-                    ->orWhere('status', 'paid');
+                $query->whereNull('status')->orWhere('status', 'paid');
             });
         }
 
         return $query;
+    }
+
+    public function startCell(): string
+    {
+        return 'A10';
     }
 
     public function map($students): array
@@ -85,6 +93,28 @@ class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize,
         ];
     }
 
+    public function drawings()
+    {
+        $drawing1 = new Drawing();
+        $drawing1->setPath(public_path('/images/bisu logo2.png'));
+        $drawing1->setHeight(96);
+        $drawing1->setCoordinates('C2');
+
+        $drawing2 = new Drawing();
+        $drawing2->setPath(public_path('/images/bagong_pilipinas.png'));
+        $drawing2->setHeight(100);
+        $drawing2->setOffsetX(150);
+        $drawing2->setCoordinates('G2');
+
+        $drawing3 = new Drawing();
+        $drawing3->setPath(public_path('/images/tuv logo.png'));
+        $drawing3->setHeight(96);
+        $drawing3->setOffsetX(70);
+        $drawing3->setCoordinates('H2');
+
+        return [$drawing1, $drawing2, $drawing3];
+    }
+
     public function headings(): array
     {
         return [
@@ -105,46 +135,82 @@ class StudentpaymentExport implements WithMapping, WithHeadings, ShouldAutoSize,
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet;
-                $lastRow = $this->rowNumber + 2;
+
+                $sheet->setCellValue('C2', 'Republic of the Philippines');
+                $sheet->setCellValue('C3', 'BOHOL ISLAND STATE UNIVERSITY');
+                $sheet->setCellValue('C4', 'San Isidro, Calape, Bohol');
+                $sheet->setCellValue('C5', 'Parents, Teachers, Guardians & Employees Association');
+                $sheet->setCellValue('C6', 'Balance | Integrity | Stewardship | Uprightness');
+
+                $sheet->getStyle('C2:C6')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)->setIndent(12);
+
+                $sheet->mergeCells('C2:E2');
+                $sheet->mergeCells('C3:E3');
+                $sheet->mergeCells('C4:E4');
+                $sheet->mergeCells('C5:E5');
+                $sheet->mergeCells('C6:E6');
+
+                for ($row = 2; $row <= 6; $row++) {
+                    $sheet->getStyle("C{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+                }
+
+                $sheet->getStyle('C3')->getFont()->setBold(true)->setSize(14);
+                $sheet->getStyle('C6')->getFont()->setBold(true)->setSize(12);
+
+                for ($row = 2; $row <= 7; $row++) {
+                    $sheet->getRowDimension($row)->setRowHeight(14);
+                }
+
+                $titleRow = 8;
+                $sheet->mergeCells("A{$titleRow}:I{$titleRow}");
+                $sheet->setCellValue("A{$titleRow}", "Student Payment Information");
+                $sheet->getRowDimension($titleRow)->setRowHeight(30);
+
+                $sheet->getStyle("A{$titleRow}")->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 14],
+                    'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+                ]);
+
+                $startingRow = 10;
+                $lastRow = $startingRow + $this->rowNumber;
                 $summaryRow = $lastRow + 1;
                 $totalRow = $summaryRow + 1;
 
-                // Make headers bold
-                $sheet->getStyle('A1:I1')->getFont()->setBold(true);
+                $sheet->getStyle("A{$startingRow}:I{$startingRow}")->getFont()->setBold(true);
 
-                // Apply borders to all rows with data
-                $cellRange = 'A1:I' . ($this->rowNumber + 1);
-                $sheet->getStyle($cellRange)->applyFromArray([
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        ],
-                    ],
+                $sheet->getStyle("A{$startingRow}:I{$lastRow}")->applyFromArray([
+                    'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]],
+                    'alignment' => ['shrinkToFit' => true, 'wrapText' => true],
+                ]);
+
+                $sheet->setCellValue("G{$summaryRow}", 'Grand Total Amount Paid:');
+                $sheet->setCellValue("H{$summaryRow}", number_format($this->totalPayments, 2));
+
+                $sheet->setCellValue("G{$totalRow}", 'Grand Total Remaining Balance:');
+                $sheet->setCellValue("I{$totalRow}", number_format($this->totalBalance, 2));
+
+                $overallRow = $totalRow + 1;
+                $sheet->setCellValue("G{$overallRow}", 'Overall Total Expected Amount:');
+                $sheet->mergeCells("H{$overallRow}:I{$overallRow}");
+                $sheet->setCellValue("H{$overallRow}", number_format($this->totalPayments + $this->totalBalance, 2));
+
+                // Apply bold styling and left alignment for summary labels (column G)
+                $sheet->getStyle("G{$summaryRow}:G{$overallRow}")->applyFromArray([
+                    'font' => ['bold' => true], // Keep the text bold
                     'alignment' => [
-                        'shrinkToFit' => true,
-                        'wrapText' => true,
+                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT, // Align labels to the left
+                        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
                     ],
                 ]);
 
-                // Add summary values
-                $sheet->setCellValue('G' . $lastRow, 'Grand Total Amount Paid:');
-                $sheet->setCellValue('H' . $lastRow, number_format($this->totalPayments, 2));
-                $sheet->setCellValue('G' . $summaryRow, 'Grand Total Remaining Balance:');
-                $sheet->setCellValue('I' . $summaryRow, number_format($this->totalBalance, 2));
-                $sheet->setCellValue('G' . $totalRow, 'Overall Total Expected Amount:');
-                $sheet->setCellValue('H' . $totalRow, number_format($this->totalPayments + $this->totalBalance, 2));
-
-                // Make summary rows bold
-                $sheet->getStyle('G' . $lastRow . ':I' . $lastRow)->getFont()->setBold(true);
-                $sheet->getStyle('G' . $summaryRow . ':I' . $summaryRow)->getFont()->setBold(true);
-                $sheet->getStyle('G' . $totalRow . ':I' . $totalRow)->getFont()->setBold(true);
-
-                // Center align the summary values
-                $sheet->getStyle('H' . $lastRow . ':I' . $summaryRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle('H' . $totalRow . ':I' . $totalRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-
-                // Merge Overall Total Expected Amount row
-                $sheet->mergeCells('H' . $totalRow . ':I' . $totalRow);
+                // Apply bold styling and right alignment for summary values (columns H & I)
+                $sheet->getStyle("H{$summaryRow}:I{$overallRow}")->applyFromArray([
+                    'font' => ['bold' => true], // Keep the text bold
+                    'alignment' => [
+                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT, // Align numbers to the right
+                        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+                    ],
+                ]);
             },
         ];
     }
